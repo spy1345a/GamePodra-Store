@@ -1269,3 +1269,61 @@ html {
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
     transform: scale(1.02);
 }
+
+/* Note Box */
+.note-box {
+    background: rgba(255, 165, 0, 0.15);
+    border: 1px solid rgba(255, 165, 0, 0.4);
+    border-radius: 10px;
+    padding: 15px 20px;
+    margin-bottom: 20px;
+    color: var(--text-dim);
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.note-box i {
+    color: var(--yellow);
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.note-box strong {
+    color: var(--yellow);
+}
+
+/* Discord Bot Note */
+.discord-bot-note {
+    background: linear-gradient(135deg, rgba(88, 101, 242, 0.15) 0%, rgba(88, 101, 242, 0.05) 100%);
+    border: 1px solid rgba(88, 101, 242, 0.4);
+    border-radius: 15px;
+    padding: 25px;
+    margin-top: 40px;
+    text-align: center;
+}
+
+.discord-bot-note i {
+    font-size: 40px;
+    color: #5865F2;
+    margin-bottom: 15px;
+}
+
+.discord-bot-note p {
+    color: var(--text-dim);
+    margin-bottom: 10px;
+}
+
+.discord-bot-note strong {
+    color: #5865F2;
+    font-size: 18px;
+}
+
+.discord-bot-note code {
+    background: rgba(88, 101, 242, 0.2);
+    color: #5865F2;
+    padding: 4px 10px;
+    border-radius: 5px;
+    font-family: monospace;
+}
