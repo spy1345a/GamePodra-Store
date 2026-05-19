@@ -1008,6 +1008,26 @@ html {
     accent-color: var(--yellow);
 }
 
+.discord-required {
+    background: rgba(255, 69, 0, 0.1);
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    border-radius: 8px;
+    padding: 10px 15px;
+    justify-content: flex-start;
+    font-size: 13px;
+}
+
+.discord-required span {
+    color: #FF4500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.discord-required i {
+    color: #FF4500;
+}
+
 .terms-checkbox {
     background: rgba(255, 215, 0, 0.05);
     border: 1px solid rgba(255, 215, 0, 0.2);
