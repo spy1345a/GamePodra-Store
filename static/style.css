@@ -934,3 +934,89 @@ html {
         min-width: 100%;
     }
 }
+
+/* Help Icon */
+.help-icon {
+    color: var(--yellow);
+    text-decoration: none;
+    margin-left: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.help-icon:hover {
+    text-shadow: 0 0 10px var(--yellow-glow);
+    transform: scale(1.1);
+}
+
+/* Discord Help Page */
+.help-section {
+    padding: 80px 20px;
+    min-height: 80vh;
+    position: relative;
+    z-index: 1;
+}
+
+.help-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.help-container h1 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    text-align: center;
+    margin-bottom: 40px;
+    font-size: 36px;
+}
+
+.help-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 30px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.help-card h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.help-card ol {
+    padding-left: 25px;
+    color: var(--text-dim);
+    line-height: 2;
+}
+
+.help-card li {
+    margin-bottom: 10px;
+}
+
+.help-card img {
+    max-width: 100%;
+    border-radius: 10px;
+    margin-top: 15px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+}
+
+.back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 30px;
+    background: var(--yellow);
+    color: var(--black);
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    transition: all 0.3s ease;
+}
+
+.back-btn:hover {
+    background: #fff;
+    box-shadow: 0 0 20px var(--yellow-glow);
+}

@@ -31,5 +31,10 @@ def checkout():
                          price=price)
 
 
+@app.route('/discord-help')
+def discord_help():
+    return render_template('discord-help.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
