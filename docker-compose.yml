@@ -1,11 +1,13 @@
 services:
   web:
     build: .
-    ports:
-      - "${APP_PORT:-8080}:5000"
+       
+    #ports:
+      #- "${APP_PORT:-8080}:5000"
 
     networks:
       proxy:
+        ipv4_address: 10.10.10.5
       default:
 
     environment:
