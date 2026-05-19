@@ -404,7 +404,6 @@ def create_order():
 
     is_upgrade = False
     original_order_id = None
-    deactivate_old_order_id = None
 
     if existing and not existing['is_expired']:
         # Active monthly — allow upgrade to a higher-rank monthly or a lifetime upgrade.
@@ -412,10 +411,10 @@ def create_order():
         if not _can_upgrade(rank_key, existing['rank_key']):
             return jsonify({'success': False, 'error': 'Cannot downgrade rank'}), 400
 
+        original_order_id = existing['order_id']
+
         if billing == 'lifetime':
             is_upgrade = True
-            original_order_id = existing['order_id']
-            deactivate_old_order_id = existing['order_id']
             amount_paise = _calculate_upgrade_price(existing['rank_key'], rank_key, billing)
 
             expected = RANKS[rank_key][billing]
@@ -428,7 +427,6 @@ def create_order():
                     'error': 'You already have an active subscription for this rank. Please wait until it expires.'
                 }), 400
             amount_paise = int(data['amount'])
-            deactivate_old_order_id = existing['order_id']
     else:
         amount_paise = int(data['amount'])
 
@@ -490,16 +488,6 @@ def create_order():
         )
         db_session.add(record)
         db_session.flush()                     # persisted in open transaction
-
-        # Deactivate the old timed-out monthly subscription when replacing it
-        if deactivate_old_order_id:
-            old = db_session.query(Payment).filter_by(
-                order_id=deactivate_old_order_id
-            ).with_for_update().first()
-            if old and old.status == 'completed' and not old.is_expired:
-                old.is_expired = True
-                old.subscription_end = _utcnow()
-                logger.info("Deactivated old monthly subscription: %s", deactivate_old_order_id)
 
         # Now safe to call Razorpay — if this fails the txn rolls back
         order = razorpay_client.order.create(data=order_data)
@@ -565,13 +553,14 @@ def verify_payment():
         payment.status = 'completed'
         payment.verified_at = _utcnow()
 
-        if payment.upgrade_from_monthly and payment.original_order_id:
+        if payment.original_order_id:
             old_payment = db_session.query(Payment).filter_by(
                 order_id=payment.original_order_id
             ).with_for_update().first()
-            if old_payment and old_payment.status == 'completed':
-                old_payment.is_lifetime = False
-                logger.info("Deactivated old monthly subscription: %s", payment.original_order_id)
+            if old_payment and old_payment.status == 'completed' and not old_payment.is_expired:
+                old_payment.is_expired = True
+                old_payment.subscription_end = _utcnow()
+                logger.info("Deactivated old subscription (upgrade): %s", payment.original_order_id)
 
         db_session.commit()
 
@@ -693,14 +682,14 @@ def _handle_payment_captured(payload: dict):
         payment.status = 'completed'
         payment.verified_at = _utcnow()
 
-        if payment.upgrade_from_monthly and payment.original_order_id:
+        if payment.original_order_id:
             old_payment = db_session.query(Payment).filter_by(
                 order_id=payment.original_order_id
             ).with_for_update().first()
             if old_payment and old_payment.status == 'completed' and not old_payment.is_expired:
                 old_payment.is_expired = True
                 old_payment.subscription_end = _utcnow()
-                logger.info("Webhook: deactivated old monthly subscription: %s", payment.original_order_id)
+                logger.info("Webhook: deactivated old subscription (upgrade): %s", payment.original_order_id)
 
         logger.info("Webhook completed payment: %s", order_id)
 
