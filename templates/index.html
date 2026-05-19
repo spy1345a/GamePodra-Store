@@ -275,32 +275,6 @@
         </div>
     </footer>
 
-    <!-- Payment Modal -->
-    <div id="paymentModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Complete Your Purchase</h2>
-            <div id="rankSummary"></div>
-            <form id="paymentForm">
-                <div class="form-group">
-                    <label for="minecraftName">Minecraft Username *</label>
-                    <input type="text" id="minecraftName" required placeholder="Enter your IGN">
-                </div>
-                <div class="form-group">
-                    <label for="discordTag">Discord Tag *</label>
-                    <input type="text" id="discordTag" required placeholder="username#0000">
-                </div>
-                <div class="form-group">
-                    <label for="email">Email Address *</label>
-                    <input type="email" id="email" required placeholder="For payment receipt">
-                </div>
-                <button type="button" id="payNowBtn" class="pay-btn">
-                    <i class="fas fa-lock"></i> Pay Now
-                </button>
-            </form>
-        </div>
-    </div>
-
     <script>
     document.getElementById('billingToggle').addEventListener('change', function() {
         const isLifetime = this.checked;
@@ -312,6 +286,11 @@
         document.querySelectorAll('.faq-item').forEach(i => i !== item && i.classList.remove('active'));
         item.classList.toggle('active');
     }));
+    function buyRank(rankName, billingType) {
+        const rankKey = rankName.toLowerCase();
+        const billing = document.getElementById('billingToggle').checked ? 'lifetime' : 'monthly';
+        window.location.href = '/checkout?rank=' + rankKey + '&billing=' + billing;
+    }
 </script>
 </body>
 </html>

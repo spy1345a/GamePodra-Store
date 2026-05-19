@@ -777,3 +777,126 @@ footer p {
 html {
     scroll-behavior: smooth;
 }
+
+/* Checkout Page */
+.checkout-section {
+    padding: 80px 20px;
+    min-height: 80vh;
+    position: relative;
+    z-index: 1;
+}
+
+.checkout-container {
+    display: flex;
+    gap: 40px;
+    max-width: 1000px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.order-summary,
+.payment-form {
+    flex: 1;
+    min-width: 300px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 30px;
+    border: 2px solid rgba(255, 215, 0, 0.2);
+}
+
+.order-summary h2,
+.payment-form h2 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    margin-bottom: 25px;
+    font-size: 24px;
+}
+
+.summary-card {
+    background: var(--black);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.rank-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.rank-info i {
+    font-size: 36px;
+    color: var(--yellow);
+}
+
+.rank-name {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 32px;
+    font-weight: 900;
+    color: var(--yellow);
+    text-shadow: 0 0 15px var(--yellow-glow);
+}
+
+.billing-type {
+    color: var(--text-dim);
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.price-display {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: #fff;
+}
+
+.price-display .currency {
+    font-size: 24px;
+    vertical-align: top;
+}
+
+.total-amount {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: rgba(255, 215, 0, 0.1);
+    border-radius: 10px;
+    margin-bottom: 20px;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.total-amount .amount {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    font-size: 32px;
+}
+
+.secure-note {
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 15px;
+}
+
+.secure-note i {
+    color: var(--yellow);
+    margin-right: 5px;
+}
+
+@media (max-width: 768px) {
+    .checkout-container {
+        flex-direction: column;
+    }
+    
+    .order-summary,
+    .payment-form {
+        min-width: 100%;
+    }
+}

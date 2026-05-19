@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout - Game Podra SMP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <nav>
+        <div class="logo">
+            <span class="logo-text">GAME PODRA</span>
+            <span class="logo-sub">SMP</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+        </div>
+    </nav>
+
+    <section class="checkout-section">
+        <h1 class="section-title">CHECKOUT</h1>
+        
+        <div class="checkout-container">
+            <div class="order-summary">
+                <h2>Order Summary</h2>
+                <div class="summary-card">
+                    <div class="rank-info">
+                        <i class="fas fa-crown"></i>
+                        <span class="rank-name">{{ rank_name }}</span>
+                    </div>
+                    <div class="billing-type">
+                        {% if billing == 'monthly' %}
+                            Monthly Plan
+                        {% else %}
+                            Lifetime Plan
+                        {% endif %}
+                    </div>
+                    <div class="price-display">
+                        <span class="currency">₹</span>
+                        <span class="amount">{{ price }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="payment-form">
+                <h2>Payment Details</h2>
+                <form id="checkoutForm">
+                    <div class="form-group">
+                        <label for="minecraftName">Minecraft Username *</label>
+                        <input type="text" id="minecraftName" name="minecraft_name" required placeholder="Enter your IGN">
+                    </div>
+                    <div class="form-group">
+                        <label for="discordTag">Discord Tag *</label>
+                        <input type="text" id="discordTag" name="discord_tag" required placeholder="username#0000">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email Address *</label>
+                        <input type="email" id="email" name="email" required placeholder="For payment receipt">
+                    </div>
+                    
+                    <div class="total-amount">
+                        <span>Total:</span>
+                        <span class="amount">₹{{ price }}</span>
+                    </div>
+
+                    <button type="submit" class="pay-btn">
+                        <i class="fas fa-lock"></i> Pay ₹{{ price }}
+                    </button>
+                    
+                    <p class="secure-note">
+                        <i class="fas fa-shield-alt"></i> Secure payment via Razorpay
+                    </p>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">GAME PODRA SMP</div>
+            <p>© 2026 Game Podra SMP. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const minecraftName = document.getElementById('minecraftName').value;
+            const discordTag = document.getElementById('discordTag').value;
+            const email = document.getElementById('email').value;
+            
+            if (!minecraftName || !discordTag || !email) {
+                alert('Please fill in all fields');
+                return;
+            }
+            
+            alert('Razorpay integration coming soon! Contact us on Discord for now.');
+        });
+    </script>
+</body>
+</html>
