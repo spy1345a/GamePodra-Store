@@ -26,7 +26,7 @@
         <div class="particle"></div>
         <div class="particle"></div>
     </div>
-    
+
     <nav>
         <div class="logo">
             <span class="logo-text">GAME PODRA</span>
@@ -39,7 +39,7 @@
 
     <section class="checkout-section">
         <h1 class="section-title">CHECKOUT</h1>
-        
+
         <div class="checkout-container">
             <div class="order-summary">
                 <h2>Order Summary</h2>
@@ -65,6 +65,7 @@
             <div class="payment-form">
                 <h2>Payment Details</h2>
                 <form id="checkoutForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="minecraftName">Minecraft Username *</label>
                         <input type="text" id="minecraftName" name="minecraft_name" required placeholder="Enter your IGN">
@@ -92,7 +93,7 @@
                             <span><i class="fas fa-exclamation-circle"></i> Required: You must join our Discord to receive your rank</span>
                         </label>
                     </div>
-                    
+
                     <div class="total-amount">
                         <span>Total:</span>
                         <span class="amount">₹{{ price }}</span>
@@ -101,7 +102,7 @@
                     <button type="submit" class="pay-btn">
                         <i class="fas fa-lock"></i> Pay ₹{{ price }}
                     </button>
-                    
+
                     <p class="secure-note">
                         <i class="fas fa-shield-alt"></i> Secure payment via Razorpay
                     </p>
@@ -120,26 +121,27 @@
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
         const razorpayKeyId = '{{ razorpay_key_id }}';
-        
+        const csrfToken = '{{ csrf_token() }}';
+
         document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
             e.preventDefault();
-            
-            const minecraftName = document.getElementById('minecraftName').value;
-            const discordTag = document.getElementById('discordTag').value;
-            const email = document.getElementById('email').value;
+
+            const minecraftName = document.getElementById('minecraftName').value.trim();
+            const discordTag    = document.getElementById('discordTag').value.trim();
+            const email         = document.getElementById('email').value.trim();
             const discordJoined = document.getElementById('discordJoined').checked;
             const termsAccepted = document.getElementById('termsAccepted').checked;
-            
+
             if (!minecraftName || !discordTag || !email) {
                 alert('Please fill in all required fields');
                 return;
             }
-            
+
             if (!discordJoined) {
                 alert('You must join our Discord server to receive your rank');
                 return;
             }
-            
+
             if (!termsAccepted) {
                 alert('You must accept the Terms & Conditions');
                 return;
@@ -148,12 +150,15 @@
             const payBtn = document.querySelector('.pay-btn');
             payBtn.disabled = true;
             payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-            
+
             try {
                 const response = await fetch('/create-order', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({
                         amount: {{ price }},
                         minecraft_name: minecraftName,
                         discord_tag: discordTag,
@@ -163,9 +168,9 @@
                         billing: '{{ billing }}'
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (data.success) {
                     const options = {
                         key: data.razorpay_key_id,
@@ -176,45 +181,48 @@
                         order_id: data.order_id,
                         handler: async function(response) {
                             payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying payment...';
-                            
+
                             try {
                                 const verifyRes = await fetch('/verify-payment', {
                                     method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'X-CSRFToken': csrfToken
+                                    },
                                     body: JSON.stringify({
                                         razorpay_payment_id: response.razorpay_payment_id,
-                                        razorpay_order_id: response.razorpay_order_id,
-                                        razorpay_signature: response.razorpay_signature
+                                        razorpay_order_id:   response.razorpay_order_id,
+                                        razorpay_signature:  response.razorpay_signature
                                     })
                                 });
-                                
+
                                 const verifyData = await verifyRes.json();
-                                
+
                                 if (verifyData.success) {
                                     const params = new URLSearchParams({
-                                        rank_name: '{{ rank_name }}',
-                                        billing: '{{ billing }}',
-                                        price: '{{ price }}',
+                                        rank_name:  '{{ rank_name }}',
+                                        billing:    '{{ billing }}',
+                                        price:      '{{ price }}',
                                         payment_id: response.razorpay_payment_id
                                     });
                                     window.location.href = '/payment-success?' + params.toString();
                                 } else {
                                     const params = new URLSearchParams({
                                         rank_name: '{{ rank_name }}',
-                                        rank_key: '{{ rank_key }}',
-                                        billing: '{{ billing }}',
-                                        price: '{{ price }}',
-                                        error: 'Payment verification failed'
+                                        rank_key:  '{{ rank_key }}',
+                                        billing:   '{{ billing }}',
+                                        price:     '{{ price }}',
+                                        error:     verifyData.error || 'Payment verification failed'
                                     });
                                     window.location.href = '/payment-failed?' + params.toString();
                                 }
                             } catch (error) {
                                 const params = new URLSearchParams({
                                     rank_name: '{{ rank_name }}',
-                                    rank_key: '{{ rank_key }}',
-                                    billing: '{{ billing }}',
-                                    price: '{{ price }}',
-                                    error: error.message
+                                    rank_key:  '{{ rank_key }}',
+                                    billing:   '{{ billing }}',
+                                    price:     '{{ price }}',
+                                    error:     error.message
                                 });
                                 window.location.href = '/payment-failed?' + params.toString();
                             }
@@ -226,44 +234,44 @@
                             }
                         },
                         prefill: {
-                            name: minecraftName,
+                            name:  minecraftName,
                             email: email
                         },
                         theme: {
                             color: '#FFD700'
                         }
                     };
-                    
+
                     const rzp1 = new Razorpay(options);
                     rzp1.on('payment.failed', function(response) {
                         const params = new URLSearchParams({
                             rank_name: '{{ rank_name }}',
-                            rank_key: '{{ rank_key }}',
-                            billing: '{{ billing }}',
-                            price: '{{ price }}',
-                            error: response.error.description || 'Payment failed'
+                            rank_key:  '{{ rank_key }}',
+                            billing:   '{{ billing }}',
+                            price:     '{{ price }}',
+                            error:     response.error.description || 'Payment failed'
                         });
                         window.location.href = '/payment-failed?' + params.toString();
                     });
-                    
+
                     rzp1.open();
                 } else {
                     const params = new URLSearchParams({
                         rank_name: '{{ rank_name }}',
-                        rank_key: '{{ rank_key }}',
-                        billing: '{{ billing }}',
-                        price: '{{ price }}',
-                        error: data.error || 'Could not create order'
+                        rank_key:  '{{ rank_key }}',
+                        billing:   '{{ billing }}',
+                        price:     '{{ price }}',
+                        error:     data.error || 'Could not create order'
                     });
                     window.location.href = '/payment-failed?' + params.toString();
                 }
             } catch (error) {
                 const params = new URLSearchParams({
                     rank_name: '{{ rank_name }}',
-                    rank_key: '{{ rank_key }}',
-                    billing: '{{ billing }}',
-                    price: '{{ price }}',
-                    error: error.message
+                    rank_key:  '{{ rank_key }}',
+                    billing:   '{{ billing }}',
+                    price:     '{{ price }}',
+                    error:     error.message
                 });
                 window.location.href = '/payment-failed?' + params.toString();
             }
