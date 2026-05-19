@@ -47,6 +47,7 @@ class GamePodraBot(commands.Bot):
         self.db = await asyncpg.create_pool(DATABASE_URL, min_size=1, max_size=3)
         await self._init_db()
         self.check_purchases.start()
+        self.expire_subscriptions.start()
         self.auto_assign_roles.start()
         await self.tree.sync()
 
@@ -117,6 +118,26 @@ class GamePodraBot(commands.Bot):
                             )
                     except discord.HTTPException:
                         logger.warning("Could not DM user %s", user_id)
+
+    # ── Background: expire monthly subs after 30 days ──────────
+
+    @tasks.loop(minutes=5)
+    async def expire_subscriptions(self):
+        if not self.db:
+            return
+
+        async with self.db.acquire() as conn:
+            result = await conn.execute("""
+                UPDATE payments
+                SET is_expired = TRUE, subscription_end = NOW()
+                WHERE status = 'completed'
+                AND billing = 'monthly'
+                AND NOT is_expired
+                AND subscription_end IS NOT NULL
+                AND subscription_end < NOW()
+            """)
+            if result != "UPDATE 0":
+                logger.info("Expired subscriptions updated: %s", result)
 
     # ── Background: auto-assign roles every 10 min ──────────────
 
