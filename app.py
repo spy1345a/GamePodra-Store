@@ -36,5 +36,10 @@ def discord_help():
     return render_template('discord-help.html')
 
 
+@app.route('/tnc')
+def tnc():
+    return render_template('tnc.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
