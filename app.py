@@ -121,11 +121,20 @@ engine = create_engine(
 db_session = scoped_session(sessionmaker(bind=engine))
 
 from models import Base, Payment, WebhookEvent
-try:
-    Base.metadata.create_all(engine)
-except IntegrityError:
-    logger.info("Database schema already exists — skipping creation")
-    db_session.rollback()
+
+_db_initialized = False
+
+
+@app.before_request
+def _ensure_db():
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            Base.metadata.create_all(engine)
+        except IntegrityError:
+            logger.info("Database schema already exists — skipping")
+            db_session.rollback()
+        _db_initialized = True
 
 # ---------------------------------------------------------------------------
 # Razorpay client
