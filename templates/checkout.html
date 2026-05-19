@@ -159,6 +159,7 @@
                         discord_tag: discordTag,
                         email: email,
                         rank: '{{ rank_name }}',
+                        rank_key: '{{ rank_key }}',
                         billing: '{{ billing }}'
                     })
                 });
@@ -172,14 +173,51 @@
                         currency: 'INR',
                         name: 'Game Podra SMP',
                         description: '{{ rank_name }} Rank - {{ billing|capitalize }}',
-                        handler: function(response) {
-                            const params = new URLSearchParams({
-                                rank_name: '{{ rank_name }}',
-                                billing: '{{ billing }}',
-                                price: '{{ price }}',
-                                payment_id: response.razorpay_payment_id
-                            });
-                            window.location.href = '/payment-success?' + params.toString();
+                        order_id: data.order_id,
+                        handler: async function(response) {
+                            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Verifying payment...';
+                            
+                            try {
+                                const verifyRes = await fetch('/verify-payment', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_signature: response.razorpay_signature
+                                    })
+                                });
+                                
+                                const verifyData = await verifyRes.json();
+                                
+                                if (verifyData.success) {
+                                    const params = new URLSearchParams({
+                                        rank_name: '{{ rank_name }}',
+                                        billing: '{{ billing }}',
+                                        price: '{{ price }}',
+                                        payment_id: response.razorpay_payment_id
+                                    });
+                                    window.location.href = '/payment-success?' + params.toString();
+                                } else {
+                                    const params = new URLSearchParams({
+                                        rank_name: '{{ rank_name }}',
+                                        rank_key: '{{ rank_key }}',
+                                        billing: '{{ billing }}',
+                                        price: '{{ price }}',
+                                        error: 'Payment verification failed'
+                                    });
+                                    window.location.href = '/payment-failed?' + params.toString();
+                                }
+                            } catch (error) {
+                                const params = new URLSearchParams({
+                                    rank_name: '{{ rank_name }}',
+                                    rank_key: '{{ rank_key }}',
+                                    billing: '{{ billing }}',
+                                    price: '{{ price }}',
+                                    error: error.message
+                                });
+                                window.location.href = '/payment-failed?' + params.toString();
+                            }
                         },
                         modal: {
                             ondismiss: function() {

@@ -1,13 +1,27 @@
 import os
 import razorpay
+from datetime import datetime
 from flask import Flask, render_template, request, jsonify
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
+app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 app.config['RAZORPAY_KEY_ID'] = os.getenv('RAZORPAY_KEY_ID', 'rzp_test_Sr9xDVlfuAWxbm')
 app.config['RAZORPAY_KEY_SECRET'] = os.getenv('RAZORPAY_KEY_SECRET', 'kACl7SYPcnTkitHbXsPzD0gG')
 
+DATABASE_URL = os.getenv('DATABASE_URL')
+engine = create_engine(DATABASE_URL)
+Session = sessionmaker(bind=engine)
+
 client = razorpay.Client(auth=(app.config['RAZORPAY_KEY_ID'], app.config['RAZORPAY_KEY_SECRET']))
+
+from models import Base, Payment
+Base.metadata.create_all(engine)
 
 RANKS = {
     'iron': {'name': 'IRON', 'monthly': 59, 'lifetime': 399},
@@ -47,11 +61,35 @@ def create_order():
     order_data = {
         'amount': amount,
         'currency': 'INR',
-        'payment_capture': 1
+        'payment_capture': 1,
+        'notes': {
+            'minecraft_name': data.get('minecraft_name', ''),
+            'discord_tag': data.get('discord_tag', ''),
+            'email': data.get('email', ''),
+            'rank': data.get('rank', ''),
+            'billing': data.get('billing', '')
+        }
     }
     
     try:
+        session = Session()
         order = client.order.create(data=order_data)
+        
+        payment_record = Payment(
+            order_id=order['id'],
+            minecraft_name=data.get('minecraft_name', ''),
+            discord_tag=data.get('discord_tag', ''),
+            email=data.get('email', ''),
+            rank=data.get('rank', ''),
+            rank_key=data.get('rank_key', ''),
+            billing=data.get('billing', ''),
+            amount=float(data.get('amount', 0)),
+            status='pending'
+        )
+        session.add(payment_record)
+        session.commit()
+        session.close()
+        
         return jsonify({
             'success': True,
             'order_id': order['id'],
@@ -76,6 +114,37 @@ def faq():
     return render_template('faq.html')
 
 
+@app.route('/verify-payment', methods=['POST'])
+def verify_payment():
+    data = request.get_json()
+    razorpay_payment_id = data.get('razorpay_payment_id')
+    razorpay_order_id = data.get('razorpay_order_id')
+    razorpay_signature = data.get('razorpay_signature')
+    
+    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
+        return jsonify({'success': False, 'error': 'Missing payment details'})
+    
+    try:
+        client.utility.verify_payment_signature({
+            'razorpay_payment_id': razorpay_payment_id,
+            'razorpay_order_id': razorpay_order_id,
+            'razorpay_signature': razorpay_signature
+        })
+        
+        session = Session()
+        payment = session.query(Payment).filter_by(order_id=razorpay_order_id).first()
+        if payment:
+            payment.payment_id = razorpay_payment_id
+            payment.status = 'completed'
+            payment.verified_at = datetime.utcnow()
+            session.commit()
+        session.close()
+        
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+
 @app.route('/payment-success')
 def payment_success():
     return render_template('payment-success.html',
@@ -96,4 +165,4 @@ def payment_failed():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=app.config['DEBUG'])
