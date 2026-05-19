@@ -399,6 +399,11 @@ input:checked + .slider:before {
 .god-badge {
     background: #FF4500;
     box-shadow: 0 0 15px #FF4500;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%) rotate(0);
+    top: -15px;
+    border-radius: 5px;
 }
 
 .rank-header {
