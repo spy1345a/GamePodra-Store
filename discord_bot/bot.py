@@ -103,26 +103,12 @@ class GamePodraBot(commands.Bot):
                 order_id = row['order_id']
                 mc_name = row['minecraft_name']
                 rank_name = row['rank']
-                discord_tag = row['discord_tag']
 
-                # Try to find the Discord member by their stored discord_tag
-                linked_user_id = 0
-                if self.guild:
-                    tag_lower = discord_tag.lower().replace('@', '')
-                    for member in self.guild.members:
-                        name_lower = member.name.lower()
-                        display_lower = member.display_name.lower()
-                        global_lower = (member.global_name or '').lower()
-                        if tag_lower in (name_lower, display_lower, global_lower):
-                            linked_user_id = member.id
-                            break
-
-                if linked_user_id:
-                    await conn.execute(
-                        "INSERT INTO discord_links (discord_user_id, minecraft_name) VALUES ($1, $2) "
-                        "ON CONFLICT (discord_user_id) DO UPDATE SET minecraft_name = $2, linked_at = NOW()",
-                        linked_user_id, mc_name
-                    )
+                # Get the Discord user ID from auto-linked purchases
+                link = await conn.fetchrow(
+                    "SELECT discord_user_id FROM discord_links WHERE minecraft_name = $1", mc_name
+                )
+                linked_user_id = link['discord_user_id'] if link else 0
 
                 # Record the assignment first so a crash mid-way doesn't cause duplicates
                 await conn.execute(
