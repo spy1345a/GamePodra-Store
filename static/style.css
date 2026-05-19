@@ -1036,35 +1036,52 @@ html {
     font-family: 'Orbitron', sans-serif;
     color: var(--yellow);
     text-align: center;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     font-size: 36px;
+    text-shadow: 0 0 20px var(--yellow-glow);
 }
 
 .last-updated {
     text-align: center;
     color: var(--text-dim);
     margin-bottom: 30px;
+    font-size: 14px;
 }
 
 .tnc-content {
     background: var(--card-bg);
-    border-radius: 15px;
-    padding: 30px;
-    border: 1px solid rgba(255, 215, 0, 0.2);
+    border-radius: 20px;
+    padding: 40px;
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
 }
 
 .intro {
-    color: var(--text-dim);
+    color: var(--text);
     font-size: 16px;
-    line-height: 1.6;
-    margin-bottom: 30px;
+    line-height: 1.8;
+    margin-bottom: 40px;
     text-align: center;
+    padding: 20px;
+    background: rgba(255, 215, 0, 0.05);
+    border-radius: 10px;
+    border-left: 3px solid var(--yellow);
+    border-right: 3px solid var(--yellow);
 }
 
 .tnc-item {
-    margin-bottom: 30px;
-    padding-bottom: 20px;
+    margin-bottom: 35px;
+    padding-bottom: 25px;
     border-bottom: 1px solid rgba(255, 215, 0, 0.1);
+    transition: all 0.3s ease;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.tnc-item:hover {
+    background: rgba(255, 215, 0, 0.03);
+    border-left: 3px solid var(--yellow);
+    padding-left: 17px;
 }
 
 .tnc-item:last-child {
@@ -1073,28 +1090,53 @@ html {
     padding-bottom: 0;
 }
 
+.tnc-item:last-child:hover {
+    padding-left: 20px;
+}
+
 .tnc-item h2 {
     font-family: 'Orbitron', sans-serif;
     color: var(--yellow);
-    font-size: 18px;
+    font-size: 20px;
     margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tnc-item h2::before {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: var(--yellow);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--yellow-glow);
 }
 
 .tnc-item p {
     color: var(--text-dim);
-    line-height: 1.7;
-    margin-bottom: 10px;
+    line-height: 1.8;
+    margin-bottom: 12px;
+    font-size: 15px;
 }
 
 .tnc-item ul {
     padding-left: 25px;
     color: var(--text-dim);
-    margin: 10px 0;
+    margin: 15px 0;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px 15px 15px 35px;
+    border-radius: 8px;
 }
 
 .tnc-item li {
-    margin-bottom: 8px;
-    line-height: 1.5;
+    margin-bottom: 10px;
+    line-height: 1.6;
+    position: relative;
+}
+
+.tnc-item li::marker {
+    color: var(--yellow);
 }
 
 /* Discord Help Page */
