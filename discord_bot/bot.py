@@ -64,14 +64,7 @@ class GamePodraBot(commands.Bot):
                     removed_at TIMESTAMP
                 )
             """)
-            await conn.execute("""
-                CREATE TABLE IF NOT EXISTS discord_links (
-                    discord_user_id BIGINT PRIMARY KEY,
-                    minecraft_name VARCHAR(100) NOT NULL,
-                    linked_at TIMESTAMP NOT NULL DEFAULT NOW()
-                )
-            """)
-        logger.info("Bot database tables initialized")
+        logger.info("Bot database table rank_assignments initialized")
 
     async def on_ready(self):
         logger.info("Logged in as %s (ID: %s)", self.user, self.user.id)
@@ -103,33 +96,27 @@ class GamePodraBot(commands.Bot):
                 order_id = row['order_id']
                 mc_name = row['minecraft_name']
                 rank_name = row['rank']
+                user_id = int(row['discord_tag'])
 
-                # Get the Discord user ID from auto-linked purchases
-                link = await conn.fetchrow(
-                    "SELECT discord_user_id FROM discord_links WHERE minecraft_name = $1", mc_name
-                )
-                linked_user_id = link['discord_user_id'] if link else 0
-
-                # Record the assignment first so a crash mid-way doesn't cause duplicates
                 await conn.execute(
                     "INSERT INTO rank_assignments (payment_order_id, discord_user_id, minecraft_name, rank, action) "
                     "VALUES ($1, $2, $3, $4, 'given')",
-                    order_id, linked_user_id, mc_name, rank_name
+                    order_id, user_id, mc_name, rank_name
                 )
 
                 announcement = f"🎉 **{mc_name}** just purchased **{rank_name}** rank!"
                 await self.announcement_channel.send(announcement)
 
-                if linked_user_id:
+                if user_id:
                     try:
-                        user = await self.fetch_user(linked_user_id)
+                        user = await self.fetch_user(user_id)
                         if user:
                             await user.send(
                                 f"Thank you for purchasing **{rank_name}** rank "
                                 f"for Minecraft user **{mc_name}**! 🎉"
                             )
                     except discord.HTTPException:
-                        logger.warning("Could not DM user %s", linked_user_id)
+                        logger.warning("Could not DM user %s", user_id)
 
     # ── Background: auto-assign roles every 10 min ──────────────
 
@@ -147,30 +134,20 @@ class GamePodraBot(commands.Bot):
         }
         all_role_ids = {v for v in ROLE_IDS.values() if v}
 
-        async with self.db.acquire() as conn:
-            links = await conn.fetch("SELECT * FROM discord_links")
-
-        for link in links:
-            user_id = link['discord_user_id']
-            mc_name = link['minecraft_name']
-
-            member = self.guild.get_member(user_id)
-            if not member:
-                continue
-
+        for member in self.guild.members:
             account_days = (datetime.now(timezone.utc) - member.created_at).days
 
             sub = None
             async with self.db.acquire() as conn:
                 sub = await conn.fetchrow("""
                     SELECT rank_key FROM payments
-                    WHERE minecraft_name = $1
+                    WHERE discord_tag = $1
                     AND status = 'completed'
                     AND NOT is_expired
                     AND (subscription_end IS NULL OR subscription_end > NOW())
                     ORDER BY created_at DESC
                     LIMIT 1
-                """, mc_name)
+                """, str(member.id))
 
             target_role_ids = {ROLE_IDS['default']} if ROLE_IDS['default'] else set()
 
@@ -195,7 +172,7 @@ class GamePodraBot(commands.Bot):
                         await member.add_roles(discord.Object(id=rid), reason="Auto-assign by GamePodra bot")
                         await discord.utils.sleep_until(datetime.now(timezone.utc) + timedelta(seconds=0.5))
                     except discord.HTTPException as e:
-                        logger.error("Failed to add role %s to %s: %s", rid, user_id, e)
+                        logger.error("Failed to add role %s to %s: %s", rid, member.id, e)
 
             for rid in to_remove:
                 if rid:
@@ -203,7 +180,7 @@ class GamePodraBot(commands.Bot):
                         await member.remove_roles(discord.Object(id=rid), reason="Auto-remove by GamePodra bot")
                         await discord.utils.sleep_until(datetime.now(timezone.utc) + timedelta(seconds=0.5))
                     except discord.HTTPException as e:
-                        logger.error("Failed to remove role %s from %s: %s", rid, user_id, e)
+                        logger.error("Failed to remove role %s from %s: %s", rid, member.id, e)
 
             await discord.utils.sleep_until(datetime.now(timezone.utc) + timedelta(seconds=1.5))
 
@@ -241,33 +218,20 @@ async def cmd_status(interaction: discord.Interaction):
         return
 
     async with bot.db.acquire() as conn:
-        link = await conn.fetchrow(
-            "SELECT minecraft_name FROM discord_links WHERE discord_user_id = $1",
-            interaction.user.id
-        )
-
-        if not link:
-            await interaction.response.send_message(
-                "No purchase found linked to your Discord account. "
-                "Make a purchase first and the bot will auto-link you.",
-                ephemeral=True
-            )
-            return
-
-        mc_name = link['minecraft_name']
         sub = await conn.fetchrow("""
-            SELECT rank, billing, is_lifetime, is_expired, subscription_end
+            SELECT minecraft_name, rank, billing, is_expired, subscription_end
             FROM payments
-            WHERE minecraft_name = $1 AND status = 'completed'
+            WHERE discord_tag = $1 AND status = 'completed'
             ORDER BY created_at DESC LIMIT 1
-        """, mc_name)
+        """, str(interaction.user.id))
 
         if not sub:
             await interaction.response.send_message(
-                f"You ({mc_name}) have no subscriptions yet.", ephemeral=True
+                "No purchase found for your Discord account.", ephemeral=True
             )
             return
 
+        mc_name = sub['minecraft_name']
         expired = sub['is_expired'] or (sub['subscription_end'] and sub['subscription_end'] < datetime.now(timezone.utc))
         embed = Embed(
             title="Your Subscription",
@@ -280,6 +244,7 @@ async def cmd_status(interaction: discord.Interaction):
         if sub['subscription_end']:
             embed.add_field(name="Expires", value=sub['subscription_end'].strftime('%d %b %Y'), inline=True)
         await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 # ── Run ──────────────────────────────────────────────────────
 
