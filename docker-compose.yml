@@ -1,22 +1,28 @@
 services:
   web:
     build: .
-    #ports:
-     # - "${APP_PORT:-8080}:5000"
+    ports:
+      - "${APP_PORT:-8080}:5000"
     environment:
       FLASK_ENV: production
       FLASK_DEBUG: "${FLASK_DEBUG:-False}"
+      FLASK_SECRET_KEY: "${FLASK_SECRET_KEY}"
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}"
       RAZORPAY_KEY_ID: "${RAZORPAY_KEY_ID}"
       RAZORPAY_KEY_SECRET: "${RAZORPAY_KEY_SECRET}"
-      DATABASE_URL: "${DATABASE_URL}"
+      RAZORPAY_WEBHOOK_SECRET: "${RAZORPAY_WEBHOOK_SECRET}"
+      ADMIN_API_KEY: "${ADMIN_API_KEY}"
+      RATE_LIMIT_STORAGE: "${RATE_LIMIT_STORAGE:-redis://redis:6379/0}"
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     restart: unless-stopped
-    networks:
-      proxy:
-        ipv4_address: 10.10.10.5
-      default:
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
 
   db:
     image: postgres:16-alpine
@@ -32,15 +38,7 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
-    networks:
-      - default
 
 volumes:
   pgdata:
     driver: local
-
-networks:
-  proxy:
-    external: true
-  default:
-    driver: bridge
