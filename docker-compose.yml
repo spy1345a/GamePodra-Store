@@ -4,6 +4,10 @@ services:
     ports:
       - "${APP_PORT:-8080}:5000"
 
+    networks:
+      proxy:
+      default:
+
     environment:
       FLASK_ENV: production
       FLASK_DEBUG: "${FLASK_DEBUG:-False}"
@@ -25,9 +29,13 @@ services:
   redis:
     image: redis:7-alpine
     restart: unless-stopped
+    networks:
+      - default
 
   db:
     image: postgres:16-alpine
+    networks:
+      - default
     environment:
       POSTGRES_USER: "${DB_USER}"
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
@@ -44,3 +52,9 @@ services:
 volumes:
   pgdata:
     driver: local
+
+networks:
+  proxy:
+    external: true
+  default:
+    driver: bridge
