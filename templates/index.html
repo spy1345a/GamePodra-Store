@@ -301,5 +301,17 @@
         </div>
     </div>
 
-    </body>
+    <script>
+    document.getElementById('billingToggle').addEventListener('change', function() {
+        const isLifetime = this.checked;
+        document.querySelector('.ranks-grid').classList.toggle('show-lifetime', isLifetime);
+        document.querySelectorAll('.toggle-label').forEach((label, i) => label.classList.toggle('active', i === (isLifetime ? 1 : 0)));
+    });
+    document.querySelectorAll('.faq-question').forEach(q => q.addEventListener('click', function() {
+        const item = this.parentElement;
+        document.querySelectorAll('.faq-item').forEach(i => i !== item && i.classList.remove('active'));
+        item.classList.toggle('active');
+    }));
+</script>
+</body>
 </html>
