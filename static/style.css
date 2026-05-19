@@ -439,15 +439,18 @@ input:checked + .slider:before {
     font-weight: 900;
 }
 
-.price-lifetime {
+.price-lifetime,
+.period-lifetime {
     display: none;
 }
 
-.show-lifetime .price-monthly {
+.show-lifetime .price-monthly,
+.show-lifetime .period-monthly {
     display: none;
 }
 
-.show-lifetime .price-lifetime {
+.show-lifetime .price-lifetime,
+.show-lifetime .period-lifetime {
     display: inline;
 }
 

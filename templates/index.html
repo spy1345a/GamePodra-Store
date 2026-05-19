@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Podra SMP - Ranks</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -52,7 +52,8 @@
                         <span class="currency">₹</span>
                         <span class="price-monthly">59</span>
                         <span class="price-lifetime">399</span>
-                        <span class="period">/mo</span>
+                        <span class="period-monthly">/mo</span>
+                        <span class="period-lifetime">/lifetime</span>
                     </div>
                 </div>
                 <div class="rank-perks">
@@ -78,7 +79,8 @@
                         <span class="currency">₹</span>
                         <span class="price-monthly">99</span>
                         <span class="price-lifetime">699</span>
-                        <span class="period">/mo</span>
+                        <span class="period-monthly">/mo</span>
+                        <span class="period-lifetime">/lifetime</span>
                     </div>
                 </div>
                 <div class="rank-perks">
@@ -105,7 +107,8 @@
                         <span class="currency">₹</span>
                         <span class="price-monthly">179</span>
                         <span class="price-lifetime">1299</span>
-                        <span class="period">/mo</span>
+                        <span class="period-monthly">/mo</span>
+                        <span class="period-lifetime">/lifetime</span>
                     </div>
                 </div>
                 <div class="rank-perks">
@@ -134,7 +137,8 @@
                         <span class="currency">₹</span>
                         <span class="price-monthly">299</span>
                         <span class="price-lifetime">2199</span>
-                        <span class="period">/mo</span>
+                        <span class="period-monthly">/mo</span>
+                        <span class="period-lifetime">/lifetime</span>
                     </div>
                 </div>
                 <div class="rank-perks">
@@ -165,7 +169,8 @@
                         <span class="currency">₹</span>
                         <span class="price-monthly">499</span>
                         <span class="price-lifetime">3599</span>
-                        <span class="period">/mo</span>
+                        <span class="period-monthly">/mo</span>
+                        <span class="period-lifetime">/lifetime</span>
                     </div>
                 </div>
                 <div class="rank-perks">
@@ -296,8 +301,5 @@
         </div>
     </div>
 
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script src="config.js"></script>
-    <script src="script.js"></script>
-</body>
+    </body>
 </html>
