@@ -1,6 +1,6 @@
 services:
   web:
-    build: .
+    build: ./web
        
     #ports:
       #- "${APP_PORT:-8080}:5000"
