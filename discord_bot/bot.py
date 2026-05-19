@@ -104,15 +104,22 @@ class GamePodraBot(commands.Bot):
                 mc_name = row['minecraft_name']
                 rank_name = row['rank']
 
-                announcement = f"🎉 **{mc_name}** just purchased **{rank_name}** rank!"
-                await self.announcement_channel.send(announcement)
-
                 link = await conn.fetchrow(
                     "SELECT discord_user_id FROM discord_links WHERE minecraft_name = $1", mc_name
                 )
-                linked_user_id = 0
+                linked_user_id = link['discord_user_id'] if link else 0
+
+                # Record the assignment first so a crash mid-way doesn't cause duplicates
+                await conn.execute(
+                    "INSERT INTO rank_assignments (payment_order_id, discord_user_id, minecraft_name, rank, action) "
+                    "VALUES ($1, $2, $3, $4, 'given')",
+                    order_id, linked_user_id, mc_name, rank_name
+                )
+
+                announcement = f"🎉 **{mc_name}** just purchased **{rank_name}** rank!"
+                await self.announcement_channel.send(announcement)
+
                 if link:
-                    linked_user_id = link['discord_user_id']
                     try:
                         user = await self.fetch_user(linked_user_id)
                         if user:
@@ -122,12 +129,6 @@ class GamePodraBot(commands.Bot):
                             )
                     except discord.HTTPException:
                         logger.warning("Could not DM user %s", linked_user_id)
-
-                await conn.execute(
-                    "INSERT INTO rank_assignments (payment_order_id, discord_user_id, minecraft_name, rank, action) "
-                    "VALUES ($1, $2, $3, $4, 'given')",
-                    order_id, linked_user_id, mc_name, rank_name
-                )
 
     # ── Background: auto-assign roles every 10 min ──────────────
 
