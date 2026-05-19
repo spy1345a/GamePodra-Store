@@ -14,7 +14,9 @@ logger = logging.getLogger(__name__)
 TOKEN = os.getenv('DISCORD_BOT_TOKEN', '')
 GUILD_ID = int(os.getenv('DISCORD_GUILD_ID', 0))
 ANNOUNCEMENT_CHANNEL_ID = int(os.getenv('DISCORD_ANNOUNCEMENT_CHANNEL_ID', 0))
-SERVER_IP = os.getenv('SERVER_IP', '')
+JAVA_IP = os.getenv('JAVA_IP', '')
+BEDROCK_IP = os.getenv('BEDROCK_IP', '')
+BEDROCK_PORT = os.getenv('BEDROCK_PORT', '')
 DATABASE_URL = os.getenv('DATABASE_URL', '')
 NEW_MEMBER_DAYS = int(os.getenv('NEW_MEMBER_DAYS', '30'))
 OG_MEMBER_DAYS = int(os.getenv('OG_MEMBER_DAYS', '365'))
@@ -209,16 +211,25 @@ class GamePodraBot(commands.Bot):
 bot = GamePodraBot()
 
 
-@bot.tree.command(name="ip", description="Send the server IP to the announcement channel")
+@bot.tree.command(name="ip", description="Send server connection info to the announcement channel")
 async def cmd_ip(interaction: discord.Interaction):
-    if not SERVER_IP:
+    if not JAVA_IP:
         await interaction.response.send_message("Server IP is not configured.", ephemeral=True)
         return
+
+    msg = (
+        f"**☕ Java Edition**\n"
+        f"`{JAVA_IP}`\n\n"
+        f"**🧊 Bedrock Edition**\n"
+        f"IP: `{BEDROCK_IP or JAVA_IP}`\n"
+        f"Port: `{BEDROCK_PORT or '19132'}`"
+    )
+
     if bot.announcement_channel:
-        await bot.announcement_channel.send(f"🌍 **Server IP:** `{SERVER_IP}`")
-        await interaction.response.send_message("IP sent to the announcement channel!", ephemeral=True)
+        await bot.announcement_channel.send(msg)
+        await interaction.response.send_message("Server info sent to the announcement channel!", ephemeral=True)
     else:
-        await interaction.response.send_message(f"🌍 **Server IP:** `{SERVER_IP}`", ephemeral=True)
+        await interaction.response.send_message(msg, ephemeral=True)
 
 
 @bot.tree.command(name="status", description="Check your subscription status")
