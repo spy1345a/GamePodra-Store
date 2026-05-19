@@ -298,8 +298,23 @@ async def cmd_link(interaction: discord.Interaction, minecraft_name: str):
 
 # ── Run ──────────────────────────────────────────────────────
 
+_REQUIRED_ENV = [
+    ('DISCORD_BOT_TOKEN',              'Discord bot token'),
+    ('DISCORD_GUILD_ID',               'Discord server (guild) ID'),
+    ('DISCORD_ANNOUNCEMENT_CHANNEL_ID', 'Announcement channel ID'),
+    ('DATABASE_URL',                   'PostgreSQL connection string'),
+]
+
 if __name__ == "__main__":
-    if not TOKEN:
-        logger.error("DISCORD_BOT_TOKEN is not set")
-    else:
-        bot.run(TOKEN)
+    missing = [label for key, label in _REQUIRED_ENV if not os.getenv(key)]
+    if missing:
+        logger.error("Missing required environment variables:\n  - " + "\n  - ".join(missing))
+        raise SystemExit(1)
+
+    if not JAVA_IP:
+        logger.warning("JAVA_IP not set — /ip command will not work")
+
+    if all(rid == 0 for rid in ROLE_IDS.values()):
+        logger.warning("No role IDs configured — role assignment will be skipped")
+
+    bot.run(TOKEN)
