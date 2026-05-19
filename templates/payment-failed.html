@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Failed - Game Podra SMP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="particles" id="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <nav>
+        <div class="logo">
+            <span class="logo-text">GAME PODRA</span>
+            <span class="logo-sub">SMP</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/checkout">Buy Ranks</a>
+        </div>
+    </nav>
+
+    <section class="payment-result-section">
+        <div class="result-container">
+            <div class="failed-icon">
+                <i class="fas fa-times-circle"></i>
+            </div>
+            <h1>Payment Failed</h1>
+            <p class="result-subtitle">Unfortunately, your payment could not be processed</p>
+            
+            {% if error %}
+            <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <div class="result-card failed-card">
+                <div class="result-item">
+                    <span class="result-label">Rank</span>
+                    <span class="result-value">{{ rank_name }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Plan</span>
+                    <span class="result-value">{{ billing|capitalize }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Amount</span>
+                    <span class="result-value">₹{{ price }}</span>
+                </div>
+            </div>
+
+            <div class="next-steps failed-steps">
+                <h3><i class="fas fa-life-ring"></i> What to Do</h3>
+                <ul>
+                    <li>Check your payment method and try again</li>
+                    <li>Ensure you have sufficient balance</li>
+                    <li>Try a different payment method</li>
+                    <li>Contact your bank for assistance</li>
+                    <li>Reach out to our support team on Discord if the issue persists</li>
+                </ul>
+            </div>
+
+            <div class="result-buttons">
+                <a href="/checkout?rank={{ rank_key }}&billing={{ billing }}" class="result-btn primary">
+                    <i class="fas fa-redo"></i> Try Again
+                </a>
+                <a href="https://discord.gg/yNXrrWbY3C" target="_blank" class="result-btn secondary">
+                    <i class="fab fa-discord"></i> Get Help on Discord
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">GAME PODRA SMP</div>
+            <p>© 2026 Game Podra SMP. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

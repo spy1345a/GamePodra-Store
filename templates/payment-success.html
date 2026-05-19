@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Game Podra SMP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="particles" id="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <nav>
+        <div class="logo">
+            <span class="logo-text">GAME PODRA</span>
+            <span class="logo-sub">SMP</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/checkout">Buy Ranks</a>
+        </div>
+    </nav>
+
+    <section class="payment-result-section">
+        <div class="result-container">
+            <div class="success-icon">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <h1>Payment Successful!</h1>
+            <p class="result-subtitle">Thank you for your purchase</p>
+            
+            <div class="result-card">
+                <div class="result-item">
+                    <span class="result-label">Rank</span>
+                    <span class="result-value">{{ rank_name }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Plan</span>
+                    <span class="result-value">{{ billing|capitalize }}</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label">Amount Paid</span>
+                    <span class="result-value">₹{{ price }}</span>
+                </div>
+                {% if payment_id %}
+                <div class="result-item">
+                    <span class="result-label">Payment ID</span>
+                    <span class="result-value">{{ payment_id }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="next-steps">
+                <h3><i class="fas fa-rocket"></i> What's Next?</h3>
+                <ul>
+                    <li>Join our Discord server</li>
+                    <li>Your rank will be delivered within 5 minutes</li>
+                    <li>If you don't receive your rank within 24 hours, contact support</li>
+                </ul>
+            </div>
+
+            <div class="result-buttons">
+                <a href="/" class="result-btn primary">
+                    <i class="fas fa-home"></i> Back to Home
+                </a>
+                <a href="https://discord.gg/yNXrrWbY3C" target="_blank" class="result-btn secondary">
+                    <i class="fab fa-discord"></i> Join Discord
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">GAME PODRA SMP</div>
+            <p>© 2026 Game Podra SMP. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

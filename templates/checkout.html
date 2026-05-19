@@ -173,8 +173,19 @@
                         name: 'Game Podra SMP',
                         description: '{{ rank_name }} Rank - {{ billing|capitalize }}',
                         handler: function(response) {
-                            alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
-                            window.location.href = '/?payment=success';
+                            const params = new URLSearchParams({
+                                rank_name: '{{ rank_name }}',
+                                billing: '{{ billing }}',
+                                price: '{{ price }}',
+                                payment_id: response.razorpay_payment_id
+                            });
+                            window.location.href = '/payment-success?' + params.toString();
+                        },
+                        modal: {
+                            ondismiss: function() {
+                                payBtn.disabled = false;
+                                payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay ₹{{ price }}';
+                            }
                         },
                         prefill: {
                             name: minecraftName,
@@ -186,16 +197,37 @@
                     };
                     
                     const rzp1 = new Razorpay(options);
+                    rzp1.on('payment.failed', function(response) {
+                        const params = new URLSearchParams({
+                            rank_name: '{{ rank_name }}',
+                            rank_key: '{{ rank_key }}',
+                            billing: '{{ billing }}',
+                            price: '{{ price }}',
+                            error: response.error.description || 'Payment failed'
+                        });
+                        window.location.href = '/payment-failed?' + params.toString();
+                    });
+                    
                     rzp1.open();
                 } else {
-                    alert('Error creating payment order: ' + data.error);
-                    payBtn.disabled = false;
-                    payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay ₹{{ price }}';
+                    const params = new URLSearchParams({
+                        rank_name: '{{ rank_name }}',
+                        rank_key: '{{ rank_key }}',
+                        billing: '{{ billing }}',
+                        price: '{{ price }}',
+                        error: data.error || 'Could not create order'
+                    });
+                    window.location.href = '/payment-failed?' + params.toString();
                 }
             } catch (error) {
-                alert('Payment error: ' + error.message);
-                payBtn.disabled = false;
-                payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay ₹{{ price }}';
+                const params = new URLSearchParams({
+                    rank_name: '{{ rank_name }}',
+                    rank_key: '{{ rank_key }}',
+                    billing: '{{ billing }}',
+                    price: '{{ price }}',
+                    error: error.message
+                });
+                window.location.href = '/payment-failed?' + params.toString();
             }
         });
     </script>

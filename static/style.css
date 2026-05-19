@@ -1363,3 +1363,181 @@ html {
     border-radius: 5px;
     font-family: monospace;
 }
+
+/* Payment Result Pages */
+.payment-result-section {
+    padding: 80px 20px;
+    min-height: 80vh;
+    position: relative;
+    z-index: 1;
+}
+
+.result-container {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.success-icon {
+    font-size: 80px;
+    color: #00C853;
+    margin-bottom: 20px;
+    animation: pulse-success 2s infinite;
+}
+
+.failed-icon {
+    font-size: 80px;
+    color: #FF4500;
+    margin-bottom: 20px;
+    animation: shake 0.5s;
+}
+
+@keyframes pulse-success {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 20px rgba(0, 200, 83, 0.5); }
+    50% { transform: scale(1.1); text-shadow: 0 0 40px rgba(0, 200, 83, 0.8); }
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.result-container h1 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    font-size: 36px;
+    margin-bottom: 10px;
+    text-shadow: 0 0 20px var(--yellow-glow);
+}
+
+.result-subtitle {
+    color: var(--text-dim);
+    font-size: 18px;
+    margin-bottom: 30px;
+}
+
+.result-card {
+    background: var(--card-bg);
+    border-radius: 15px;
+    padding: 25px;
+    border: 2px solid rgba(255, 215, 0, 0.2);
+    margin-bottom: 30px;
+}
+
+.result-card.failed-card {
+    border-color: rgba(255, 69, 0, 0.2);
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.result-item:last-child {
+    border-bottom: none;
+}
+
+.result-label {
+    color: var(--text-dim);
+}
+
+.result-value {
+    color: var(--yellow);
+    font-weight: 600;
+}
+
+.next-steps {
+    background: rgba(255, 215, 0, 0.05);
+    border-radius: 15px;
+    padding: 25px;
+    text-align: left;
+    margin-bottom: 30px;
+    border: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.next-steps h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: var(--yellow);
+    margin-bottom: 15px;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.next-steps ul {
+    padding-left: 20px;
+    color: var(--text-dim);
+}
+
+.next-steps li {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.failed-steps {
+    border-color: rgba(255, 69, 0, 0.2);
+    background: rgba(255, 69, 0, 0.05);
+}
+
+.failed-steps h3 {
+    color: #FF4500;
+}
+
+.error-message {
+    background: rgba(255, 69, 0, 0.1);
+    border: 1px solid rgba(255, 69, 0, 0.3);
+    border-radius: 10px;
+    padding: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #FF4500;
+}
+
+.error-message i {
+    font-size: 20px;
+}
+
+.result-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.result-btn {
+    padding: 15px 30px;
+    border-radius: 10px;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s ease;
+}
+
+.result-btn.primary {
+    background: var(--yellow);
+    color: var(--black);
+}
+
+.result-btn.primary:hover {
+    background: #fff;
+    box-shadow: 0 0 30px var(--yellow-glow);
+}
+
+.result-btn.secondary {
+    background: transparent;
+    color: var(--yellow);
+    border: 2px solid var(--yellow);
+}
+
+.result-btn.secondary:hover {
+    background: rgba(255, 215, 0, 0.1);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}

@@ -76,5 +76,24 @@ def faq():
     return render_template('faq.html')
 
 
+@app.route('/payment-success')
+def payment_success():
+    return render_template('payment-success.html',
+                         rank_name=request.args.get('rank_name', 'N/A'),
+                         billing=request.args.get('billing', 'monthly'),
+                         price=request.args.get('price', '0'),
+                         payment_id=request.args.get('payment_id', ''))
+
+
+@app.route('/payment-failed')
+def payment_failed():
+    return render_template('payment-failed.html',
+                         rank_name=request.args.get('rank_name', 'N/A'),
+                         rank_key=request.args.get('rank_key', 'iron'),
+                         billing=request.args.get('billing', 'monthly'),
+                         price=request.args.get('price', '0'),
+                         error=request.args.get('error', 'Payment was not completed'))
+
+
 if __name__ == '__main__':
     app.run(debug=True)
