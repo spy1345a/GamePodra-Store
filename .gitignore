@@ -35,7 +35,18 @@ Thumbs.db
 # virtuel enviroments
 .venv
 
-# heavy images only png allowed
+# Images - only allow webp
 *.jpe
 *.jpeg
 *.png
+*.gif
+*.bmp
+*.tiff
+
+# Compressed files
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tgz

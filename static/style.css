@@ -1221,3 +1221,25 @@ html {
     color: var(--text-dim);
     font-size: 18px;
 }
+
+/* Steps Images */
+.steps-images {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.steps-images img {
+    width: 100%;
+    height: auto;
+    border-radius: 10px;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.steps-images img:hover {
+    border-color: var(--yellow);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    transform: scale(1.02);
+}
