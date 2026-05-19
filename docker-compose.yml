@@ -33,4 +33,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  pgdata:
+      - pgdata:/var/lib/postgresql/data
