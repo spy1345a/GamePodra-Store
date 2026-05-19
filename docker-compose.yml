@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -23,8 +21,7 @@ services:
       POSTGRES_PASSWORD: "${DB_PASSWORD}"
       POSTGRES_DB: "${DB_NAME}"
     volumes:
-      pgdata:
-        driver: local
+      - pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
@@ -33,4 +30,5 @@ services:
     restart: unless-stopped
 
 volumes:
-      - pgdata:/var/lib/postgresql/data
+  pgdata:
+    driver: local
