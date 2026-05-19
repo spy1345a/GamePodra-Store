@@ -415,6 +415,7 @@ def create_order():
         if billing == 'lifetime':
             is_upgrade = True
             original_order_id = existing['order_id']
+            deactivate_old_order_id = existing['order_id']
             amount_paise = _calculate_upgrade_price(existing['rank_key'], rank_key, billing)
 
             expected = RANKS[rank_key][billing]
@@ -696,8 +697,9 @@ def _handle_payment_captured(payload: dict):
             old_payment = db_session.query(Payment).filter_by(
                 order_id=payment.original_order_id
             ).with_for_update().first()
-            if old_payment and old_payment.status == 'completed':
-                old_payment.is_lifetime = False
+            if old_payment and old_payment.status == 'completed' and not old_payment.is_expired:
+                old_payment.is_expired = True
+                old_payment.subscription_end = _utcnow()
                 logger.info("Webhook: deactivated old monthly subscription: %s", payment.original_order_id)
 
         logger.info("Webhook completed payment: %s", order_id)
