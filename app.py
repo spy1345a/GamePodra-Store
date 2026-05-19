@@ -243,27 +243,6 @@ def _get_existing_subscription(minecraft_name: str, discord_tag: str) -> dict | 
     }
 
 
-def _check_expired_subscription(minecraft_name: str, discord_tag: str, existing: dict | None = None) -> tuple[bool, str]:
-    if existing is None:
-        existing = _get_existing_subscription(minecraft_name, discord_tag)
-
-    if not existing:
-        return False, ""
-
-    if existing['billing'] == 'lifetime' and existing['is_lifetime'] and not existing['is_expired']:
-        return True, "You already have an active lifetime subscription."
-
-    if existing['is_expired']:
-        return False, ""
-
-    if existing['subscription_end'] and existing['subscription_end'] < _utcnow():
-        return False, ""
-
-    expires = existing['subscription_end']
-    date_str = expires.strftime('%d %b %Y') if expires else 'an unknown date'
-    return True, f"You already have an active subscription. You can purchase a new one after it expires on {date_str}."
-
-
 def _can_upgrade(rank_key: str, existing_rank_key: str) -> bool:
     rank_order = ['iron', 'gold', 'diamond', 'netherite', 'god']
 
@@ -418,21 +397,22 @@ def create_order():
     billing = data['billing']
 
     existing = _get_existing_subscription(mc, discord)
-    is_expired, expired_error = _check_expired_subscription(mc, discord, existing)
-    if is_expired:
-        return jsonify({'success': False, 'error': expired_error}), 400
+
+    # Block any purchase if user already has an active lifetime subscription
+    if existing and not existing['is_expired'] and existing['is_lifetime']:
+        return jsonify({'success': False, 'error': 'You already have a lifetime subscription'}), 400
+
     is_upgrade = False
     original_order_id = None
     deactivate_old_order_id = None
 
     if existing and not existing['is_expired']:
-        if existing['billing'] == 'lifetime' and existing['is_lifetime']:
-            return jsonify({'success': False, 'error': 'You already have a lifetime subscription'}), 400
+        # Active monthly — allow upgrade to a higher-rank monthly or a lifetime upgrade.
+        # The previous subscription is lost (deactivated) along with remaining days.
+        if not _can_upgrade(rank_key, existing['rank_key']):
+            return jsonify({'success': False, 'error': 'Cannot downgrade rank'}), 400
 
         if billing == 'lifetime':
-            if not _can_upgrade(rank_key, existing['rank_key']):
-                return jsonify({'success': False, 'error': 'Cannot downgrade rank'}), 400
-
             is_upgrade = True
             original_order_id = existing['order_id']
             amount_paise = _calculate_upgrade_price(existing['rank_key'], rank_key, billing)
@@ -441,8 +421,11 @@ def create_order():
             if amount_paise != expected:
                 data['amount'] = str(amount_paise)
         else:
-            if not _can_upgrade(rank_key, existing['rank_key']):
-                return jsonify({'success': False, 'error': 'Cannot downgrade rank'}), 400
+            if rank_key == existing['rank_key']:
+                return jsonify({
+                    'success': False,
+                    'error': 'You already have an active subscription for this rank. Please wait until it expires.'
+                }), 400
             amount_paise = int(data['amount'])
             deactivate_old_order_id = existing['order_id']
     else:
