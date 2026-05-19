@@ -28,6 +28,29 @@ services:
 
     restart: unless-stopped
 
+  discord_bot:
+    build: ./discord_bot
+    environment:
+      DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"
+      DISCORD_GUILD_ID: "${DISCORD_GUILD_ID}"
+      DISCORD_ANNOUNCEMENT_CHANNEL_ID: "${DISCORD_ANNOUNCEMENT_CHANNEL_ID}"
+      SERVER_IP: "${SERVER_IP}"
+      DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}"
+      NEW_MEMBER_DAYS: "${NEW_MEMBER_DAYS:-30}"
+      OG_MEMBER_DAYS: "${OG_MEMBER_DAYS:-365}"
+      ROLE_ID_DEFAULT: "${ROLE_ID_DEFAULT}"
+      ROLE_ID_NEW_MEMBER: "${ROLE_ID_NEW_MEMBER}"
+      ROLE_ID_OG_MEMBER: "${ROLE_ID_OG_MEMBER}"
+      ROLE_ID_IRON: "${ROLE_ID_IRON}"
+      ROLE_ID_GOLD: "${ROLE_ID_GOLD}"
+      ROLE_ID_DIAMOND: "${ROLE_ID_DIAMOND}"
+      ROLE_ID_NETHER: "${ROLE_ID_NETHER}"
+      ROLE_ID_GOD: "${ROLE_ID_GOD}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   redis:
     image: redis:7-alpine
     restart: unless-stopped
