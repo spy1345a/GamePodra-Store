@@ -584,6 +584,15 @@ input:checked + .slider:before {
 }
 
 /* FAQ Section */
+.faq-page-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.faq-page-container .section-title {
+    margin-bottom: 40px;
+}
+
 .faq-section {
     padding: 80px 20px;
     position: relative;

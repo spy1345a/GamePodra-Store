@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ - Game Podra SMP</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="particles" id="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+    
+    <nav>
+        <div class="logo">
+            <span class="logo-text">GAME PODRA</span>
+            <span class="logo-sub">SMP</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Home</a>
+            <a href="/checkout">Buy Ranks</a>
+        </div>
+    </nav>
+
+    <section class="faq-section">
+        <div class="faq-page-container">
+            <a href="/" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
+            
+            <h1 class="section-title">FREQUENTLY ASKED QUESTIONS</h1>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I get my rank after payment?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Once payment is confirmed, join the server and your rank will be applied automatically within 5 minutes. Make sure to use the same Discord/Minecraft username during purchase.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Can I upgrade my rank later?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! You only pay the difference when upgrading. Contact an admin on Discord for upgrades.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Is my payment secure?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely! We use Razorpay, India's most trusted payment gateway. Your card details are never stored on our servers.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>What if I change my mind?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We offer a 24-hour refund policy. Contact our Discord support team for assistance.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How long does monthly rank last?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Monthly ranks last for 30 days from the date of purchase. You'll need to renew to keep your rank and perks.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>What happens to my rank if the server closes?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Lifetime ranks are valid for the duration the server is online. We cannot guarantee perpetual service, but we'll always try to keep the server running as long as possible.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Can I get a refund if I'm banned?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>No. Violating server rules and receiving a ban does not qualify for a refund. All purchases are final as per our Terms & Conditions.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I contact support?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Join our Discord server and open a support ticket. Our team typically responds within 24 hours.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">GAME PODRA SMP</div>
+            <p>© 2026 Game Podra SMP. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+    document.querySelectorAll('.faq-question').forEach(q => q.addEventListener('click', function() {
+        const item = this.parentElement;
+        document.querySelectorAll('.faq-item').forEach(i => i !== item && i.classList.remove('active'));
+        item.classList.toggle('active');
+    }));
+    </script>
+</body>
+</html>

@@ -41,5 +41,10 @@ def tnc():
     return render_template('tnc.html')
 
 
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
+
+
 if __name__ == '__main__':
     app.run(debug=True)
