@@ -103,11 +103,26 @@ class GamePodraBot(commands.Bot):
                 order_id = row['order_id']
                 mc_name = row['minecraft_name']
                 rank_name = row['rank']
+                discord_tag = row['discord_tag']
 
-                link = await conn.fetchrow(
-                    "SELECT discord_user_id FROM discord_links WHERE minecraft_name = $1", mc_name
-                )
-                linked_user_id = link['discord_user_id'] if link else 0
+                # Try to find the Discord member by their stored discord_tag
+                linked_user_id = 0
+                if self.guild:
+                    tag_lower = discord_tag.lower().replace('@', '')
+                    for member in self.guild.members:
+                        name_lower = member.name.lower()
+                        display_lower = member.display_name.lower()
+                        global_lower = (member.global_name or '').lower()
+                        if tag_lower in (name_lower, display_lower, global_lower):
+                            linked_user_id = member.id
+                            break
+
+                if linked_user_id:
+                    await conn.execute(
+                        "INSERT INTO discord_links (discord_user_id, minecraft_name) VALUES ($1, $2) "
+                        "ON CONFLICT (discord_user_id) DO UPDATE SET minecraft_name = $2, linked_at = NOW()",
+                        linked_user_id, mc_name
+                    )
 
                 # Record the assignment first so a crash mid-way doesn't cause duplicates
                 await conn.execute(
@@ -119,7 +134,7 @@ class GamePodraBot(commands.Bot):
                 announcement = f"🎉 **{mc_name}** just purchased **{rank_name}** rank!"
                 await self.announcement_channel.send(announcement)
 
-                if link:
+                if linked_user_id:
                     try:
                         user = await self.fetch_user(linked_user_id)
                         if user:
@@ -244,9 +259,11 @@ async def cmd_status(interaction: discord.Interaction):
             "SELECT minecraft_name FROM discord_links WHERE discord_user_id = $1",
             interaction.user.id
         )
+
         if not link:
             await interaction.response.send_message(
-                "You haven't linked your Minecraft account yet. Use `/link <username>`.",
+                "No purchase found linked to your Discord account. "
+                "Make a purchase first and the bot will auto-link you.",
                 ephemeral=True
             )
             return
@@ -277,25 +294,6 @@ async def cmd_status(interaction: discord.Interaction):
         if sub['subscription_end']:
             embed.add_field(name="Expires", value=sub['subscription_end'].strftime('%d %b %Y'), inline=True)
         await interaction.response.send_message(embed=embed, ephemeral=True)
-
-
-@bot.tree.command(name="link", description="Link your Minecraft account to your Discord")
-async def cmd_link(interaction: discord.Interaction, minecraft_name: str):
-    if not bot.db:
-        await interaction.response.send_message("Database is not connected.", ephemeral=True)
-        return
-
-    mc = minecraft_name.strip()
-    async with bot.db.acquire() as conn:
-        await conn.execute("""
-            INSERT INTO discord_links (discord_user_id, minecraft_name)
-            VALUES ($1, $2)
-            ON CONFLICT (discord_user_id) DO UPDATE SET minecraft_name = $2, linked_at = NOW()
-        """, interaction.user.id, mc)
-    await interaction.response.send_message(
-        f"✅ Linked your Discord to Minecraft username **{mc}**!", ephemeral=True
-    )
-
 
 # ── Run ──────────────────────────────────────────────────────
 
