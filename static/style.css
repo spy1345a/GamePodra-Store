@@ -1020,3 +1020,14 @@ html {
     background: #fff;
     box-shadow: 0 0 20px var(--yellow-glow);
 }
+
+/* Image Placeholder */
+.image-placeholder {
+    background: rgba(255, 215, 0, 0.1);
+    border: 2px dashed rgba(255, 215, 0, 0.4);
+    border-radius: 10px;
+    padding: 60px 20px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 18px;
+}
