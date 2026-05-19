@@ -13,6 +13,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from sqlalchemy import create_engine
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
 
@@ -120,7 +121,11 @@ engine = create_engine(
 db_session = scoped_session(sessionmaker(bind=engine))
 
 from models import Base, Payment, WebhookEvent
-Base.metadata.create_all(engine)
+try:
+    Base.metadata.create_all(engine)
+except IntegrityError:
+    logger.info("Database schema already exists — skipping creation")
+    db_session.rollback()
 
 # ---------------------------------------------------------------------------
 # Razorpay client
@@ -607,7 +612,6 @@ def razorpay_webhook():
     # INSERT the WebhookEvent record first with a UNIQUE constraint on event_id
     # and let the DB reject the duplicate, rather than SELECT-then-INSERT.
     # If the insert raises an IntegrityError we know it's a duplicate → 200.
-    from sqlalchemy.exc import IntegrityError
 
     webhook_record = WebhookEvent(
         event_id=event_id or None,
