@@ -112,11 +112,10 @@ engine = create_engine(
     pool_pre_ping=True,                    # checks connection health before use
     pool_size=5,
     max_overflow=10,
-    pool_recycle=1800,                     # FIX: recycle connections every 30 min
-                                           # prevents "server has gone away" / random
-                                           # 500s after DB idle timeout (common on
-                                           # MySQL/MariaDB which default to 8h, and
-                                           # some managed Postgres services)
+    pool_recycle=240,                      # recycle every 4 min — must be lower than
+                                           # the DB's idle session timeout (common values:
+                                           # 300s on AWS RDS, 0/disabled on self-hosted).
+                                           # Adjust pool_recycle or DB timeout as needed.
 )
 db_session = scoped_session(sessionmaker(bind=engine))
 
@@ -168,7 +167,7 @@ VALID_BILLING = {'monthly', 'lifetime'}
 # Discord: Username#1234 (legacy) or new @username (2–32 chars)
 _DISCORD_RE = re.compile(r'^.{2,37}$')
 # Basic email
-_EMAIL_RE   = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+_EMAIL_RE   = re.compile(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
 
 
 def validate_order_input(data: dict) -> tuple[bool, str]:
@@ -260,7 +259,9 @@ def _check_expired_subscription(minecraft_name: str, discord_tag: str, existing:
     if existing['subscription_end'] and existing['subscription_end'] < _utcnow():
         return False, ""
 
-    return True, "You already have an active subscription."
+    expires = existing['subscription_end']
+    date_str = expires.strftime('%d %b %Y') if expires else 'an unknown date'
+    return True, f"You already have an active subscription. You can purchase a new one after it expires on {date_str}."
 
 
 def _can_upgrade(rank_key: str, existing_rank_key: str) -> bool:
@@ -422,6 +423,7 @@ def create_order():
         return jsonify({'success': False, 'error': expired_error}), 400
     is_upgrade = False
     original_order_id = None
+    deactivate_old_order_id = None
 
     if existing and not existing['is_expired']:
         if existing['billing'] == 'lifetime' and existing['is_lifetime']:
@@ -442,6 +444,7 @@ def create_order():
             if not _can_upgrade(rank_key, existing['rank_key']):
                 return jsonify({'success': False, 'error': 'Cannot downgrade rank'}), 400
             amount_paise = int(data['amount'])
+            deactivate_old_order_id = existing['order_id']
     else:
         amount_paise = int(data['amount'])
 
@@ -503,6 +506,16 @@ def create_order():
         )
         db_session.add(record)
         db_session.flush()                     # persisted in open transaction
+
+        # Deactivate the old timed-out monthly subscription when replacing it
+        if deactivate_old_order_id:
+            old = db_session.query(Payment).filter_by(
+                order_id=deactivate_old_order_id
+            ).with_for_update().first()
+            if old and old.status == 'completed' and not old.is_expired:
+                old.is_expired = True
+                old.subscription_end = _utcnow()
+                logger.info("Deactivated old monthly subscription: %s", deactivate_old_order_id)
 
         # Now safe to call Razorpay — if this fails the txn rolls back
         order = razorpay_client.order.create(data=order_data)
@@ -688,8 +701,8 @@ def _handle_payment_captured(payload: dict):
                          .with_for_update()
                          .first())
     if not payment:
-        logger.warning("Webhook: order %s not found in DB", order_id)
-        return
+        logger.warning("Webhook: order %s not found in DB — raising to trigger retry", order_id)
+        raise LookupError("Payment record not found for order %s" % order_id)
 
     if payment.status != 'completed':
         payment.payment_id = razorpay_payment_id
