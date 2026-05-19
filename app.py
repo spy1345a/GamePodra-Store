@@ -57,7 +57,6 @@ _REQUIRED_ENV_KEYS = [
     ('DATABASE_URL',           'Database connection'),
     ('RAZORPAY_KEY_ID',       'Razorpay API key'),
     ('RAZORPAY_KEY_SECRET',   'Razorpay API secret'),
-    ('ADMIN_API_KEY',         'Admin bot authentication'),
     ('RAZORPAY_WEBHOOK_SECRET', 'Razorpay webhook verification'),
 ]
 
@@ -196,12 +195,6 @@ def validate_order_input(data: dict) -> tuple[bool, str]:
 # ---------------------------------------------------------------------------
 # Signature helpers
 # ---------------------------------------------------------------------------
-
-def _verify_api_key(api_key: str | None, expected_key: str | None) -> bool:
-    if not api_key or not expected_key:
-        return False
-    return hmac.compare_digest(api_key, expected_key)
-
 
 def _verify_payment_signature(payment_id: str, order_id: str, signature: str) -> bool:
     secret  = app.config['RAZORPAY_KEY_SECRET'].encode()
@@ -733,105 +726,6 @@ def _handle_order_paid(payload: dict):
         return
 
     logger.info("order.paid received for order %s — awaiting payment.captured", order_id)
-
-
-# ---------------------------------------------------------------------------
-# External bot API for subscription management
-# ---------------------------------------------------------------------------
-
-@app.route('/api/admin/pending-expiry', methods=['GET'])
-def get_pending_expiry_subscriptions():
-    api_key = request.headers.get('X-API-Key')
-    if not _verify_api_key(api_key, os.getenv('ADMIN_API_KEY')):
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    thirty_days_ago = _utcnow() - timedelta(days=30)
-    subscriptions = db_session.query(Payment).filter(
-        Payment.status == 'completed',
-        Payment.is_expired == False,
-        Payment.is_lifetime == False,
-        Payment.subscription_end <= thirty_days_ago
-    ).all()
-
-    result = []
-    for sub in subscriptions:
-        result.append({
-            'id': sub.id,
-            'minecraft_name': sub.minecraft_name,
-            'discord_tag': sub.discord_tag,
-            'rank_key': sub.rank_key,
-            'subscription_end': sub.subscription_end.isoformat() if sub.subscription_end else None,
-            'days_since_expiry': (_utcnow() - sub.subscription_end).days if sub.subscription_end else 0,
-        })
-
-    return jsonify({'subscriptions': result})
-
-
-@app.route('/api/admin/mark-expired', methods=['POST'])
-@csrf.exempt
-def mark_subscription_expired():
-    api_key = request.headers.get('X-API-Key')
-    if not _verify_api_key(api_key, os.getenv('ADMIN_API_KEY')):
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    data = request.get_json(silent=True)
-    if not data or 'subscription_id' not in data:
-        return jsonify({'error': 'Missing subscription_id'}), 400
-
-    try:
-        payment = (db_session.query(Payment)
-                             .filter_by(id=data['subscription_id'])
-                             .with_for_update()
-                             .first())
-        if not payment:
-            return jsonify({'error': 'Subscription not found'}), 404
-
-        payment.is_expired = True
-        payment.status = 'expired'
-        payment.last_checked_at = _utcnow()
-        db_session.commit()
-
-        logger.info("Marked subscription %s as expired", data['subscription_id'])
-        return jsonify({'success': True})
-
-    except Exception as e:
-        db_session.rollback()
-        logger.error("Failed to mark expired: %s", e)
-        return jsonify({'error': 'Operation failed'}), 500
-
-
-@app.route('/api/admin/cleanup-expired', methods=['POST'])
-@csrf.exempt
-def cleanup_expired_subscriptions():
-    api_key = request.headers.get('X-API-Key')
-    if not _verify_api_key(api_key, os.getenv('ADMIN_API_KEY')):
-        return jsonify({'error': 'Unauthorized'}), 401
-
-    data = request.get_json(silent=True)
-    days_before_cleanup = data.get('days', 30) if data else 30
-
-    cutoff_date = _utcnow() - timedelta(days=days_before_cleanup)
-
-    try:
-        result = db_session.query(Payment).filter(
-            Payment.status == 'expired',
-            Payment.is_expired == True,
-            Payment.last_checked_at <= cutoff_date
-        ).all()
-
-        count = 0
-        for payment in result:
-            payment.status = 'removed'
-            count += 1
-
-        db_session.commit()
-        logger.info("Cleaned up %d expired subscriptions", count)
-        return jsonify({'success': True, 'removed_count': count})
-
-    except Exception as e:
-        db_session.rollback()
-        logger.error("Cleanup failed: %s", e)
-        return jsonify({'error': 'Operation failed'}), 500
 
 
 # ---------------------------------------------------------------------------
