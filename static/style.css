@@ -1001,6 +1001,24 @@ html {
     accent-color: var(--yellow);
 }
 
+.terms-checkbox {
+    background: rgba(255, 215, 0, 0.05);
+    border: 1px solid rgba(255, 215, 0, 0.2);
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 15px;
+}
+
+.terms-checkbox a {
+    color: var(--yellow);
+    text-decoration: underline;
+}
+
+.terms-checkbox a:hover {
+    text-shadow: 0 0 10px var(--yellow-glow);
+}
+
 /* Discord Help Page */
 .help-section {
     padding: 80px 20px;
