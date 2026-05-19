@@ -159,7 +159,7 @@
                         'X-CSRFToken': csrfToken
                     },
                     body: JSON.stringify({
-                        amount: {{ price }},
+                        amount: {{ price * 100 }},
                         minecraft_name: minecraftName,
                         discord_tag: discordTag,
                         email: email,
