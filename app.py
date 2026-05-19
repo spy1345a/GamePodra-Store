@@ -1,12 +1,16 @@
 import os
+import re
 import hmac
+import json
 import hashlib
 import logging
 import razorpay
 from datetime import datetime, timedelta
-from functools import wraps
 
-from flask import Flask, render_template, request, jsonify, session, abort
+from flask import Flask, render_template, request, jsonify, session
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
 from dotenv import load_dotenv
@@ -19,19 +23,47 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Secret key — MUST be set in .env, never hardcoded
 app.secret_key = os.getenv('FLASK_SECRET_KEY')
 if not app.secret_key:
     raise RuntimeError("FLASK_SECRET_KEY is not set in environment variables")
 
+IS_PRODUCTION = os.getenv('FLASK_ENV') == 'production'
+
 app.config.update(
     DEBUG=os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes'),
-    SESSION_COOKIE_HTTPONLY=True,       # JS cannot read the cookie
-    SESSION_COOKIE_SAMESITE='Lax',      # CSRF protection
-    SESSION_COOKIE_SECURE=os.getenv('FLASK_ENV') == 'production',  # HTTPS only in prod
+
+    # --- Session / Cookie security ---
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=IS_PRODUCTION,   # enforce HTTPS in prod
     PERMANENT_SESSION_LIFETIME=timedelta(hours=2),
+
+    # --- CSRF (flask-wtf) ---
+    WTF_CSRF_TIME_LIMIT=3600,              # token valid for 1 hour
+    WTF_CSRF_SSL_STRICT=IS_PRODUCTION,
+
+    # --- Razorpay ---
     RAZORPAY_KEY_ID=os.getenv('RAZORPAY_KEY_ID'),
     RAZORPAY_KEY_SECRET=os.getenv('RAZORPAY_KEY_SECRET'),
+    RAZORPAY_WEBHOOK_SECRET=os.getenv('RAZORPAY_WEBHOOK_SECRET', ''),
+)
+
+# ---------------------------------------------------------------------------
+# CSRF protection — covers all state-changing routes automatically
+# Exempt only the webhook (signed by Razorpay, not a browser form)
+# ---------------------------------------------------------------------------
+
+csrf = CSRFProtect(app)
+
+# ---------------------------------------------------------------------------
+# Rate limiting
+# ---------------------------------------------------------------------------
+
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=[],                     # no global limit; set per-route
+    storage_uri='memory://',               # swap to redis:// in prod
 )
 
 # ---------------------------------------------------------------------------
@@ -40,7 +72,7 @@ app.config.update(
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s [%(levelname)s] %(message)s'
+    format='%(asctime)s [%(levelname)s] %(message)s',
 )
 logger = logging.getLogger(__name__)
 
@@ -54,14 +86,14 @@ if not DATABASE_URL:
 
 engine = create_engine(
     DATABASE_URL,
-    pool_pre_ping=True,        # auto-reconnect on stale connections
+    pool_pre_ping=True,
     pool_size=5,
     max_overflow=10,
 )
-db_session = scoped_session(sessionmaker(bind=engine))  # thread-safe sessions
+db_session = scoped_session(sessionmaker(bind=engine))
 
-from models import Base, Payment
-Base.metadata.create_all(engine)   # creates tables if they don't exist
+from models import Base, Payment, WebhookEvent
+Base.metadata.create_all(engine)
 
 # ---------------------------------------------------------------------------
 # Razorpay client
@@ -86,15 +118,35 @@ RANKS = {
 VALID_BILLING = {'monthly', 'lifetime'}
 
 # ---------------------------------------------------------------------------
-# Helpers
+# Input validation
 # ---------------------------------------------------------------------------
 
-def validate_checkout_input(data: dict) -> tuple[bool, str]:
-    """Returns (is_valid, error_message)."""
-    required = ['minecraft_name', 'discord_tag', 'email', 'rank', 'rank_key', 'billing', 'amount']
+# Minecraft: 3-16 chars, letters/digits/underscore only
+_MC_RE      = re.compile(r'^[A-Za-z0-9_]{3,16}$')
+# Discord: Username#1234 (legacy) or new @username (2–32 chars)
+_DISCORD_RE = re.compile(r'^.{2,37}$')
+# Basic email
+_EMAIL_RE   = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+
+
+def validate_order_input(data: dict) -> tuple[bool, str]:
+    required = ['minecraft_name', 'discord_tag', 'email',
+                'rank', 'rank_key', 'billing', 'amount']
     for field in required:
         if not data.get(field):
             return False, f"Missing field: {field}"
+
+    mc = data['minecraft_name'].strip()
+    if not _MC_RE.match(mc):
+        return False, "Invalid Minecraft username (3-16 chars, letters/digits/underscore)"
+
+    discord = data['discord_tag'].strip()
+    if not _DISCORD_RE.match(discord):
+        return False, "Invalid Discord tag"
+
+    email = data['email'].strip()
+    if not _EMAIL_RE.match(email) or len(email) > 255:
+        return False, "Invalid email address"
 
     if data['rank_key'] not in RANKS:
         return False, "Invalid rank"
@@ -102,25 +154,45 @@ def validate_checkout_input(data: dict) -> tuple[bool, str]:
     if data['billing'] not in VALID_BILLING:
         return False, "Invalid billing type"
 
-    # Verify amount hasn't been tampered with
-    rank     = RANKS[data['rank_key']]
-    expected = rank[data['billing']]
-    if int(data.get('amount', 0)) != expected:
-        return False, "Amount mismatch — possible tampering"
+    # Server-side price check — prevents browser-side tampering
+    expected = RANKS[data['rank_key']][data['billing']]
+    try:
+        if int(data['amount']) != expected:
+            return False, "Amount mismatch"
+    except (ValueError, TypeError):
+        return False, "Invalid amount"
 
     return True, ""
 
 
-def verify_razorpay_signature(payment_id: str, order_id: str, signature: str) -> bool:
-    """Manually verify Razorpay signature using HMAC-SHA256."""
-    secret = app.config['RAZORPAY_KEY_SECRET'].encode('utf-8')
-    message = f"{order_id}|{payment_id}".encode('utf-8')
-    expected = hmac.new(secret, message, hashlib.sha256).hexdigest()
-    return hmac.compare_digest(expected, signature)
+# ---------------------------------------------------------------------------
+# Signature helpers
+# ---------------------------------------------------------------------------
+
+def _verify_payment_signature(payment_id: str, order_id: str, signature: str) -> bool:
+    secret  = app.config['RAZORPAY_KEY_SECRET'].encode()
+    message = f"{order_id}|{payment_id}".encode()
+    digest  = hmac.new(secret, message, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(digest, signature)
+
+
+def _verify_webhook_signature(raw_body: bytes, received_sig: str) -> bool:
+    secret = app.config['RAZORPAY_WEBHOOK_SECRET'].encode()
+    digest = hmac.new(secret, raw_body, hashlib.sha256).hexdigest()
+    return hmac.compare_digest(digest, received_sig)
 
 
 # ---------------------------------------------------------------------------
-# Teardown: return DB session to pool after each request
+# Inject CSRF token into every template context so JS can read it
+# ---------------------------------------------------------------------------
+
+@app.context_processor
+def inject_csrf_token():
+    return {'csrf_token': generate_csrf}
+
+
+# ---------------------------------------------------------------------------
+# Teardown
 # ---------------------------------------------------------------------------
 
 @app.teardown_appcontext
@@ -128,7 +200,7 @@ def shutdown_session(exception=None):
     db_session.remove()
 
 # ---------------------------------------------------------------------------
-# Routes
+# Routes — public pages
 # ---------------------------------------------------------------------------
 
 @app.route('/')
@@ -159,116 +231,19 @@ def checkout():
     )
 
 
-@app.route('/create-order', methods=['POST'])
-def create_order():
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
-
-    is_valid, error = validate_checkout_input(data)
-    if not is_valid:
-        logger.warning("Invalid create-order input: %s", error)
-        return jsonify({'success': False, 'error': error}), 400
-
-    amount_paise = int(data['amount']) * 100  # Razorpay works in paise
-
-    order_data = {
-        'amount': amount_paise,
-        'currency': 'INR',
-        'payment_capture': 1,
-        'notes': {
-            'minecraft_name': data['minecraft_name'],
-            'discord_tag':    data['discord_tag'],
-            'email':          data['email'],
-            'rank':           data['rank'],
-            'billing':        data['billing'],
-        }
-    }
-
-    try:
-        order = razorpay_client.order.create(data=order_data)
-
-        payment_record = Payment(
-            order_id=order['id'],
-            minecraft_name=data['minecraft_name'],
-            discord_tag=data['discord_tag'],
-            email=data['email'],
-            rank=data['rank'],
-            rank_key=data['rank_key'],
-            billing=data['billing'],
-            amount=float(data['amount']),
-            currency='INR',
-            status='pending',
-            # payment_id is intentionally NULL here — filled in after payment
-        )
-        db_session.add(payment_record)
-        db_session.commit()
-
-        # Store order_id in server-side session for verification later
-        session['pending_order_id'] = order['id']
-        session.permanent = True
-
-        logger.info("Order created: %s for %s", order['id'], data['email'])
-
-        return jsonify({
-            'success': True,
-            'order_id': order['id'],
-            'razorpay_key_id': app.config['RAZORPAY_KEY_ID'],
-        })
-
-    except Exception as e:
-        db_session.rollback()
-        logger.error("Order creation failed: %s", e)
-        return jsonify({'success': False, 'error': 'Order creation failed'}), 500
+@app.route('/discord-help')
+def discord_help():
+    return render_template('discord-help.html')
 
 
-@app.route('/verify-payment', methods=['POST'])
-def verify_payment():
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
+@app.route('/tnc')
+def tnc():
+    return render_template('tnc.html')
 
-    razorpay_payment_id = data.get('razorpay_payment_id')
-    razorpay_order_id   = data.get('razorpay_order_id')
-    razorpay_signature  = data.get('razorpay_signature')
 
-    if not all([razorpay_payment_id, razorpay_order_id, razorpay_signature]):
-        return jsonify({'success': False, 'error': 'Missing payment details'}), 400
-
-    # Security: ensure the order_id matches the one we created in this session
-    if session.get('pending_order_id') != razorpay_order_id:
-        logger.warning("Session/order_id mismatch — possible replay attack: %s", razorpay_order_id)
-        return jsonify({'success': False, 'error': 'Order session mismatch'}), 403
-
-    # Verify signature using HMAC (don't rely solely on Razorpay SDK)
-    if not verify_razorpay_signature(razorpay_payment_id, razorpay_order_id, razorpay_signature):
-        logger.warning("Signature verification failed for order: %s", razorpay_order_id)
-        return jsonify({'success': False, 'error': 'Signature verification failed'}), 400
-
-    try:
-        payment = db_session.query(Payment).filter_by(order_id=razorpay_order_id).first()
-        if not payment:
-            return jsonify({'success': False, 'error': 'Order not found'}), 404
-
-        if payment.status == 'completed':
-            # Idempotent — already verified, don't error
-            return jsonify({'success': True})
-
-        payment.payment_id  = razorpay_payment_id
-        payment.status      = 'completed'
-        payment.verified_at = datetime.utcnow()
-        db_session.commit()
-
-        # Clear the session order after successful verification
-        session.pop('pending_order_id', None)
-
-        logger.info("Payment verified: %s → order %s", razorpay_payment_id, razorpay_order_id)
-        return jsonify({'success': True})
-
-    except Exception as e:
-        db_session.rollback()
-        logger.error("Payment verification DB error: %s", e)
-        return jsonify({'success': False, 'error': 'Verification failed'}), 500
+@app.route('/faq')
+def faq():
+    return render_template('faq.html')
 
 
 @app.route('/payment-success')
@@ -294,19 +269,230 @@ def payment_failed():
     )
 
 
-@app.route('/discord-help')
-def discord_help():
-    return render_template('discord-help.html')
+# ---------------------------------------------------------------------------
+# Routes — payment API  (rate-limited)
+# ---------------------------------------------------------------------------
+
+@app.route('/create-order', methods=['POST'])
+@limiter.limit("10 per minute; 30 per hour")   # per IP — blocks DoS/spam
+def create_order():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
+
+    is_valid, error = validate_order_input(data)
+    if not is_valid:
+        logger.warning("Bad create-order input from %s: %s", request.remote_addr, error)
+        return jsonify({'success': False, 'error': error}), 400
+
+    # Sanitise before storing
+    mc      = data['minecraft_name'].strip()
+    discord = data['discord_tag'].strip()
+    email   = data['email'].strip().lower()
+
+    amount_paise = int(data['amount']) * 100
+
+    order_data = {
+        'amount': amount_paise,
+        'currency': 'INR',
+        'payment_capture': 1,
+        'notes': {
+            'minecraft_name': mc,
+            'discord_tag':    discord,
+            'email':          email,
+            'rank':           data['rank'],
+            'billing':        data['billing'],
+        },
+    }
+
+    try:
+        order = razorpay_client.order.create(data=order_data)
+
+        record = Payment(
+            order_id=order['id'],
+            minecraft_name=mc,
+            discord_tag=discord,
+            email=email,
+            rank=data['rank'],
+            rank_key=data['rank_key'],
+            billing=data['billing'],
+            amount=float(data['amount']),
+            currency='INR',
+            status='pending',
+            # payment_id intentionally NULL — filled on verify
+        )
+        db_session.add(record)
+        db_session.commit()
+
+        session['pending_order_id'] = order['id']
+        session.permanent = True
+
+        logger.info("Order created: %s for %s", order['id'], email)
+        return jsonify({
+            'success': True,
+            'order_id': order['id'],
+            'razorpay_key_id': app.config['RAZORPAY_KEY_ID'],
+        })
+
+    except Exception as e:
+        db_session.rollback()
+        logger.error("Order creation failed: %s", e)
+        return jsonify({'success': False, 'error': 'Order creation failed'}), 500
 
 
-@app.route('/tnc')
-def tnc():
-    return render_template('tnc.html')
+@app.route('/verify-payment', methods=['POST'])
+@limiter.limit("10 per minute")
+def verify_payment():
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({'success': False, 'error': 'Invalid JSON'}), 400
+
+    payment_id = data.get('razorpay_payment_id', '').strip()
+    order_id   = data.get('razorpay_order_id', '').strip()
+    signature  = data.get('razorpay_signature', '').strip()
+
+    if not all([payment_id, order_id, signature]):
+        return jsonify({'success': False, 'error': 'Missing payment details'}), 400
+
+    # Replay-attack guard: order must match what we stored in session
+    if session.get('pending_order_id') != order_id:
+        logger.warning("Session/order mismatch from %s — possible replay: %s",
+                       request.remote_addr, order_id)
+        return jsonify({'success': False, 'error': 'Order session mismatch'}), 403
+
+    if not _verify_payment_signature(payment_id, order_id, signature):
+        logger.warning("Signature failed for order %s from %s", order_id, request.remote_addr)
+        return jsonify({'success': False, 'error': 'Signature verification failed'}), 400
+
+    try:
+        payment = db_session.query(Payment).filter_by(order_id=order_id).first()
+        if not payment:
+            return jsonify({'success': False, 'error': 'Order not found'}), 404
+
+        if payment.status == 'completed':
+            return jsonify({'success': True})   # idempotent
+
+        payment.payment_id  = payment_id
+        payment.status      = 'completed'
+        payment.verified_at = datetime.utcnow()
+        db_session.commit()
+
+        session.pop('pending_order_id', None)
+        logger.info("Payment verified: %s → %s", payment_id, order_id)
+        return jsonify({'success': True})
+
+    except Exception as e:
+        db_session.rollback()
+        logger.error("Verify-payment DB error: %s", e)
+        return jsonify({'success': False, 'error': 'Verification failed'}), 500
 
 
-@app.route('/faq')
-def faq():
-    return render_template('faq.html')
+# ---------------------------------------------------------------------------
+# Razorpay webhook endpoint
+# Handles payment.captured, payment.failed, order.paid events from Razorpay.
+# Must be exempted from CSRF (Razorpay signs the payload itself).
+# Register this URL in your Razorpay dashboard → Webhooks.
+# ---------------------------------------------------------------------------
+
+@app.route('/webhook/razorpay', methods=['POST'])
+@csrf.exempt
+@limiter.limit("60 per minute")            # generous — Razorpay can burst
+def razorpay_webhook():
+    raw_body     = request.get_data()
+    received_sig = request.headers.get('X-Razorpay-Signature', '')
+    event_id     = request.headers.get('X-Razorpay-Event-Id', '')
+
+    # 1. Verify webhook signature
+    if app.config['RAZORPAY_WEBHOOK_SECRET']:
+        if not _verify_webhook_signature(raw_body, received_sig):
+            logger.warning("Webhook signature invalid from %s", request.remote_addr)
+            return jsonify({'error': 'Invalid signature'}), 400
+
+    try:
+        payload = json.loads(raw_body)
+    except json.JSONDecodeError:
+        return jsonify({'error': 'Bad JSON'}), 400
+
+    event_type = payload.get('event', 'unknown')
+
+    # 2. Idempotency — skip if we already processed this event
+    existing = db_session.query(WebhookEvent).filter_by(event_id=event_id).first()
+    if existing:
+        logger.info("Duplicate webhook event %s — skipping", event_id)
+        return jsonify({'status': 'already processed'}), 200
+
+    # 3. Store raw event
+    webhook_record = WebhookEvent(
+        event_id=event_id or None,
+        event_type=event_type,
+        payload=raw_body.decode('utf-8'),
+        processed='no',
+    )
+    db_session.add(webhook_record)
+    db_session.flush()   # get the record ID without committing yet
+
+    try:
+        # 4. Handle known events
+        if event_type in ('payment.captured', 'order.paid'):
+            _handle_payment_captured(payload)
+
+        elif event_type == 'payment.failed':
+            _handle_payment_failed(payload)
+
+        webhook_record.processed = 'yes'
+        db_session.commit()
+        logger.info("Webhook processed: %s (%s)", event_type, event_id)
+        return jsonify({'status': 'ok'}), 200
+
+    except Exception as e:
+        db_session.rollback()
+        # Re-add the webhook record marked as error so we can investigate
+        webhook_record.processed = 'error'
+        db_session.add(webhook_record)
+        db_session.commit()
+        logger.error("Webhook handler error [%s]: %s", event_type, e)
+        return jsonify({'status': 'error'}), 500
+
+
+def _handle_payment_captured(payload: dict):
+    """Mark payment as completed when Razorpay confirms capture."""
+    entity = (payload.get('payload', {})
+                     .get('payment', {})
+                     .get('entity', {}))
+
+    razorpay_payment_id = entity.get('id')
+    order_id            = entity.get('order_id')
+
+    if not razorpay_payment_id or not order_id:
+        logger.warning("payment.captured missing ids: %s", payload)
+        return
+
+    payment = db_session.query(Payment).filter_by(order_id=order_id).first()
+    if not payment:
+        logger.warning("Webhook: order %s not found in DB", order_id)
+        return
+
+    if payment.status != 'completed':
+        payment.payment_id  = razorpay_payment_id
+        payment.status      = 'completed'
+        payment.verified_at = datetime.utcnow()
+        logger.info("Webhook completed payment: %s", order_id)
+
+
+def _handle_payment_failed(payload: dict):
+    """Mark payment as failed when Razorpay reports failure."""
+    entity = (payload.get('payload', {})
+                     .get('payment', {})
+                     .get('entity', {}))
+
+    order_id = entity.get('order_id')
+    if not order_id:
+        return
+
+    payment = db_session.query(Payment).filter_by(order_id=order_id).first()
+    if payment and payment.status == 'pending':
+        payment.status = 'failed'
+        logger.info("Webhook marked payment failed: %s", order_id)
 
 
 # ---------------------------------------------------------------------------
