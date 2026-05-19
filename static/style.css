@@ -1230,12 +1230,38 @@ html {
     margin-top: 20px;
 }
 
+.step-container {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.step-container:hover {
+    border-color: var(--yellow);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    transform: scale(1.02);
+}
+
+.step-number {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--yellow);
+    color: var(--black);
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    z-index: 10;
+    box-shadow: 0 0 10px var(--yellow-glow);
+}
+
 .steps-images img {
     width: 100%;
     height: auto;
-    border-radius: 10px;
-    border: 2px solid rgba(255, 215, 0, 0.3);
-    transition: all 0.3s ease;
+    display: block;
 }
 
 .steps-images img:hover {
