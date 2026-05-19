@@ -11,8 +11,8 @@ load_dotenv()
 app = Flask(__name__)
 app.config['DEBUG'] = os.getenv('FLASK_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
-app.config['RAZORPAY_KEY_ID'] = os.getenv('RAZORPAY_KEY_ID', 'rzp_test_Sr9xDVlfuAWxbm')
-app.config['RAZORPAY_KEY_SECRET'] = os.getenv('RAZORPAY_KEY_SECRET', 'kACl7SYPcnTkitHbXsPzD0gG')
+app.config['RAZORPAY_KEY_ID'] = os.getenv('RAZORPAY_KEY_ID')
+app.config['RAZORPAY_KEY_SECRET'] = os.getenv('RAZORPAY_KEY_SECRET')
 
 DATABASE_URL = os.getenv('DATABASE_URL')
 engine = create_engine(DATABASE_URL)
