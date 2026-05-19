@@ -2,9 +2,4 @@
 __pycache__/
 *.pyc
 .git/
-.env
 *.md
-static/css/
-static/js/
-static/images/
-templates/
