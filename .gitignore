@@ -34,3 +34,8 @@ Thumbs.db
 
 # virtuel enviroments
 .venv
+
+# heavy images only png allowed
+*.jpe
+*.jpeg
+*.png
