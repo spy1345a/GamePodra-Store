@@ -117,19 +117,86 @@
         </div>
     </footer>
 
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script>
-        document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        const razorpayKeyId = '{{ razorpay_key_id }}';
+        
+        document.getElementById('checkoutForm').addEventListener('submit', async function(e) {
             e.preventDefault();
+            
             const minecraftName = document.getElementById('minecraftName').value;
             const discordTag = document.getElementById('discordTag').value;
             const email = document.getElementById('email').value;
+            const discordJoined = document.getElementById('discordJoined').checked;
+            const termsAccepted = document.getElementById('termsAccepted').checked;
             
             if (!minecraftName || !discordTag || !email) {
-                alert('Please fill in all fields');
+                alert('Please fill in all required fields');
                 return;
             }
             
-            alert('Razorpay integration coming soon! Contact us on Discord for now.');
+            if (!discordJoined) {
+                alert('You must join our Discord server to receive your rank');
+                return;
+            }
+            
+            if (!termsAccepted) {
+                alert('You must accept the Terms & Conditions');
+                return;
+            }
+
+            const payBtn = document.querySelector('.pay-btn');
+            payBtn.disabled = true;
+            payBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            
+            try {
+                const response = await fetch('/create-order', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        amount: {{ price }},
+                        minecraft_name: minecraftName,
+                        discord_tag: discordTag,
+                        email: email,
+                        rank: '{{ rank_name }}',
+                        billing: '{{ billing }}'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const options = {
+                        key: data.razorpay_key_id,
+                        amount: {{ price }} * 100,
+                        currency: 'INR',
+                        name: 'Game Podra SMP',
+                        description: '{{ rank_name }} Rank - {{ billing|capitalize }}',
+                        handler: function(response) {
+                            alert('Payment successful! Payment ID: ' + response.razorpay_payment_id);
+                            window.location.href = '/?payment=success';
+                        },
+                        prefill: {
+                            name: minecraftName,
+                            email: email
+                        },
+                        theme: {
+                            color: '#FFD700'
+                        }
+                    };
+                    
+                    const rzp1 = new Razorpay(options);
+                    rzp1.open();
+                } else {
+                    alert('Error creating payment order: ' + data.error);
+                    payBtn.disabled = false;
+                    payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay ₹{{ price }}';
+                }
+            } catch (error) {
+                alert('Payment error: ' + error.message);
+                payBtn.disabled = false;
+                payBtn.innerHTML = '<i class="fas fa-lock"></i> Pay ₹{{ price }}';
+            }
         });
     </script>
 </body>

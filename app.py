@@ -1,6 +1,13 @@
-from flask import Flask, render_template, request, redirect, url_for
+import os
+import razorpay
+from flask import Flask, render_template, request, jsonify
 
 app = Flask(__name__)
+
+app.config['RAZORPAY_KEY_ID'] = os.getenv('RAZORPAY_KEY_ID', 'rzp_test_Sr9xDVlfuAWxbm')
+app.config['RAZORPAY_KEY_SECRET'] = os.getenv('RAZORPAY_KEY_SECRET', 'kACl7SYPcnTkitHbXsPzD0gG')
+
+client = razorpay.Client(auth=(app.config['RAZORPAY_KEY_ID'], app.config['RAZORPAY_KEY_SECRET']))
 
 RANKS = {
     'iron': {'name': 'IRON', 'monthly': 59, 'lifetime': 399},
@@ -28,7 +35,30 @@ def checkout():
                          rank_name=rank['name'],
                          rank_key=rank_key,
                          billing=billing,
-                         price=price)
+                         price=price,
+                         razorpay_key_id=app.config['RAZORPAY_KEY_ID'])
+
+
+@app.route('/create-order', methods=['POST'])
+def create_order():
+    data = request.get_json()
+    amount = int(data.get('amount', 0)) * 100
+    
+    order_data = {
+        'amount': amount,
+        'currency': 'INR',
+        'payment_capture': 1
+    }
+    
+    try:
+        order = client.order.create(data=order_data)
+        return jsonify({
+            'success': True,
+            'order_id': order['id'],
+            'razorpay_key_id': app.config['RAZORPAY_KEY_ID']
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
 
 
 @app.route('/discord-help')
