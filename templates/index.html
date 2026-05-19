@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Podra SMP - Ranks</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <nav>
+        <div class="logo">
+            <span class="logo-text">GAME PODRA</span>
+            <span class="logo-sub">SMP</span>
+        </div>
+        <div class="nav-links">
+            <a href="#ranks">Ranks</a>
+            <a href="#features">Features</a>
+            <a href="#faq">FAQ</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1 class="glitch-text" data-text="GAME PODRA SMP">GAME PODRA SMP</h1>
+        <p class="subtitle">Choose Your Rank. Rule the Server.</p>
+        <div class="server-ip">
+            <i class="fas fa-server"></i> play.gamepodra.com
+        </div>
+    </section>
+
+    <section id="ranks" class="ranks-section">
+        <h2 class="section-title">SERVER RANKS</h2>
+        <div class="toggle-container">
+            <span class="toggle-label active">Monthly</span>
+            <label class="switch">
+                <input type="checkbox" id="billingToggle">
+                <span class="slider"></span>
+            </label>
+            <span class="toggle-label">Lifetime</span>
+        </div>
+
+        <div class="ranks-grid">
+            <!-- Iron Rank -->
+            <div class="rank-card iron">
+                <div class="rank-header">
+                    <div class="rank-icon"><i class="fas fa-cube"></i></div>
+                    <h3>IRON</h3>
+                    <div class="rank-price">
+                        <span class="currency">₹</span>
+                        <span class="price-monthly">59</span>
+                        <span class="price-lifetime">399</span>
+                        <span class="period">/mo</span>
+                    </div>
+                </div>
+                <div class="rank-perks">
+                    <ul>
+                        <li><i class="fas fa-home"></i> 4 Homes</li>
+                        <li><i class="fas fa-box"></i> Diamond Kit</li>
+                        <li><i class="fas fa-tag"></i> Custom Nickname</li>
+                        <li><i class="fas fa-video"></i> Name in Video</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" onclick="buyRank('Iron', 'monthly')">
+                    <i class="fas fa-shopping-cart"></i> Purchase
+                </button>
+            </div>
+
+            <!-- Gold Rank -->
+            <div class="rank-card gold">
+                <div class="rank-badge">POPULAR</div>
+                <div class="rank-header">
+                    <div class="rank-icon"><i class="fas fa-crown"></i></div>
+                    <h3>GOLD</h3>
+                    <div class="rank-price">
+                        <span class="currency">₹</span>
+                        <span class="price-monthly">99</span>
+                        <span class="price-lifetime">699</span>
+                        <span class="period">/mo</span>
+                    </div>
+                </div>
+                <div class="rank-perks">
+                    <ul>
+                        <li><i class="fas fa-home"></i> 6 Homes</li>
+                        <li><i class="fas fa-box"></i> Diamond Kit + 5 Gapples</li>
+                        <li><i class="fas fa-tag"></i> Custom Nickname</li>
+                        <li><i class="fas fa-video"></i> Name in Video</li>
+                        <li><i class="fas fa-hat-wizard"></i> /hat Command</li>
+                        <li><i class="fas fa-palette"></i> Colored Chat</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" onclick="buyRank('Gold', 'monthly')">
+                    <i class="fas fa-shopping-cart"></i> Purchase
+                </button>
+            </div>
+
+            <!-- Diamond Rank -->
+            <div class="rank-card diamond">
+                <div class="rank-header">
+                    <div class="rank-icon"><i class="fas fa-gem"></i></div>
+                    <h3>DIAMOND</h3>
+                    <div class="rank-price">
+                        <span class="currency">₹</span>
+                        <span class="price-monthly">179</span>
+                        <span class="price-lifetime">1299</span>
+                        <span class="period">/mo</span>
+                    </div>
+                </div>
+                <div class="rank-perks">
+                    <ul>
+                        <li><i class="fas fa-home"></i> 8 Homes</li>
+                        <li><i class="fas fa-box"></i> Netherite Kit</li>
+                        <li><i class="fas fa-tag"></i> Custom Nickname</li>
+                        <li><i class="fas fa-video"></i> Name in Video</li>
+                        <li><i class="fas fa-hat-wizard"></i> /hat Command</li>
+                        <li><i class="fas fa-palette"></i> Colored Chat</li>
+                        <li><i class="fas fa-hammer"></i> /craft Command</li>
+                        <li><i class="fas fa-skull"></i> 1 Player Head</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" onclick="buyRank('Diamond', 'monthly')">
+                    <i class="fas fa-shopping-cart"></i> Purchase
+                </button>
+            </div>
+
+            <!-- Netherite Rank -->
+            <div class="rank-card netherite">
+                <div class="rank-header">
+                    <div class="rank-icon"><i class="fas fa-fire"></i></div>
+                    <h3>NETHERITE</h3>
+                    <div class="rank-price">
+                        <span class="currency">₹</span>
+                        <span class="price-monthly">299</span>
+                        <span class="price-lifetime">2199</span>
+                        <span class="period">/mo</span>
+                    </div>
+                </div>
+                <div class="rank-perks">
+                    <ul>
+                        <li><i class="fas fa-home"></i> 12 Homes</li>
+                        <li><i class="fas fa-box"></i> Enchanted Netherite Kit</li>
+                        <li><i class="fas fa-tag"></i> Custom Nickname</li>
+                        <li><i class="fas fa-video"></i> Name in Video</li>
+                        <li><i class="fas fa-hat-wizard"></i> /hat & /craft</li>
+                        <li><i class="fas fa-palette"></i> Gradient Chat Colors</li>
+                        <li><i class="fas fa-skull"></i> 2 Player Heads</li>
+                        <li><i class="fas fa-sun"></i> /ptime Command</li>
+                        <li><i class="fas fa-door-open"></i> Custom Join Message</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" onclick="buyRank('Netherite', 'monthly')">
+                    <i class="fas fa-shopping-cart"></i> Purchase
+                </button>
+            </div>
+
+            <!-- God Rank -->
+            <div class="rank-card god">
+                <div class="rank-badge god-badge">LEGENDARY</div>
+                <div class="rank-header">
+                    <div class="rank-icon"><i class="fas fa-star"></i></div>
+                    <h3>GOD</h3>
+                    <div class="rank-price">
+                        <span class="currency">₹</span>
+                        <span class="price-monthly">499</span>
+                        <span class="price-lifetime">3599</span>
+                        <span class="period">/mo</span>
+                    </div>
+                </div>
+                <div class="rank-perks">
+                    <ul>
+                        <li><i class="fas fa-home"></i> 20 Homes</li>
+                        <li><i class="fas fa-box"></i> Max Enchanted Netherite Kit</li>
+                        <li><i class="fas fa-tag"></i> Custom Nickname</li>
+                        <li><i class="fas fa-video"></i> Name in Video</li>
+                        <li><i class="fas fa-hat-wizard"></i> /hat, /craft, /ptime</li>
+                        <li><i class="fas fa-palette"></i> RGB Chat</li>
+                        <li><i class="fas fa-skull"></i> 3 Player Heads</li>
+                        <li><i class="fas fa-door-open"></i> Join & Leave Messages</li>
+                        <li><i class="fas fa-feather"></i> /fly in Claims</li>
+                        <li><i class="fas fa-ghost"></i> /vanish Access</li>
+                        <li><i class="fas fa-star"></i> Priority Queue</li>
+                    </ul>
+                </div>
+                <button class="buy-btn" onclick="buyRank('God', 'monthly')">
+                    <i class="fas fa-shopping-cart"></i> Purchase
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features-section">
+        <h2 class="section-title">WHY BUY A RANK?</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <i class="fas fa-bolt"></i>
+                <h3>Exclusive Perks</h3>
+                <p>Access powerful commands and kits unavailable to regular players</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-shield-haltered"></i>
+                <h3>Stand Out</h3>
+                <p>Custom nicknames, colored chat, and special join messages</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-headset"></i>
+                <h3>Priority Support</h3>
+                <p>Get faster responses and priority queue access</p>
+            </div>
+            <div class="feature-card">
+                <i class="fas fa-hand-holding-heart"></i>
+                <h3>Support Server</h3>
+                <p>Your purchase helps keep Game Podra SMP running strong</p>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="faq-section">
+        <h2 class="section-title">FREQUENTLY ASKED QUESTIONS</h2>
+        <div class="faq-container">
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>How do I get my rank after payment?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Once payment is confirmed, join the server and your rank will be applied automatically within 5 minutes. Make sure to use the same Discord/Minecraft username during purchase.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Can I upgrade my rank later?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Yes! You only pay the difference when upgrading. Contact an admin on Discord for upgrades.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>Is my payment secure?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>Absolutely! We use Razorpay, India's most trusted payment gateway. Your card details are never stored on our servers.</p>
+                </div>
+            </div>
+            <div class="faq-item">
+                <div class="faq-question">
+                    <span>What if I change my mind?</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="faq-answer">
+                    <p>We offer a 24-hour refund policy. Contact our Discord support team for assistance.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-logo">GAME PODRA SMP</div>
+            <p>© 2026 Game Podra SMP. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#"><i class="fab fa-discord"></i></a>
+                <a href="#"><i class="fab fa-youtube"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Complete Your Purchase</h2>
+            <div id="rankSummary"></div>
+            <form id="paymentForm">
+                <div class="form-group">
+                    <label for="minecraftName">Minecraft Username *</label>
+                    <input type="text" id="minecraftName" required placeholder="Enter your IGN">
+                </div>
+                <div class="form-group">
+                    <label for="discordTag">Discord Tag *</label>
+                    <input type="text" id="discordTag" required placeholder="username#0000">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address *</label>
+                    <input type="email" id="email" required placeholder="For payment receipt">
+                </div>
+                <button type="button" id="payNowBtn" class="pay-btn">
+                    <i class="fas fa-lock"></i> Pay Now
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script src="config.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
