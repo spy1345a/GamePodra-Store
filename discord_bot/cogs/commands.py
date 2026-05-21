@@ -183,6 +183,27 @@ class CommandsCog(commands.Cog, name="Commands"):
             log.error("syncranks error: %s", error)
             await interaction.response.send_message("❌ An unexpected error occurred.", ephemeral=True)
 
+    # ------------------------------------------------------------------
+    # /id — DM your Discord user ID
+    # ------------------------------------------------------------------
+
+    @app_commands.command(name="id", description="Get your Discord user ID in DMs")
+    async def id_command(self, interaction: discord.Interaction):
+        try:
+            await interaction.user.send(
+                f"🆔 Your Discord User ID is:\n```{interaction.user.id}```"
+            )
+
+            await interaction.response.send_message(
+                "✅ I sent your Discord ID in DMs.",
+                ephemeral=True,
+            )
+
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                "❌ I couldn't DM you. Please enable DMs from server members.",
+                ephemeral=True,
+            )
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(CommandsCog(bot))
