@@ -30,6 +30,8 @@ services:
 
   discord_bot:
     build: ./discord_bot
+    networks:
+      - default
     environment:
       DISCORD_BOT_TOKEN: "${DISCORD_BOT_TOKEN}"
       DISCORD_GUILD_ID: "${DISCORD_GUILD_ID}"
@@ -38,7 +40,7 @@ services:
       BEDROCK_IP: "${BEDROCK_IP}"
       BEDROCK_PORT: "${BEDROCK_PORT:-19132}"
       DATABASE_URL: "postgresql://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}"
-      NEW_MEMBER_DAYS: "${NEW_MEMBER_DAYS:-30}"
+      NEW_MEMBER_DAYS: "${NEW_MEMBER_DAYS:-1}"
       OG_MEMBER_DAYS: "${OG_MEMBER_DAYS:-365}"
       ROLE_ID_DEFAULT: "${ROLE_ID_DEFAULT}"
       ROLE_ID_NEW_MEMBER: "${ROLE_ID_NEW_MEMBER}"
