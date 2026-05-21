@@ -84,13 +84,17 @@ class CommandsCog(commands.Cog, name="Commands"):
 
         if not row:
             embed = discord.Embed(
-                title="No active rank",
+                title="❌ No active rank",
                 description=(
-                    "You don't have an active rank on GamePodra.\n\n"
-                    "Visit our store to grab one!"
-                ),
-                color=discord.Color.greyple(),
+                    "You don't have an active rank on GamePodra Grab one Today.\n\n"
+                    "🛒 Store:\n"
+                        https://store.gamepodra.online"
+                    ),
+                    color=discord.Color.greyple(),
             )
+
+            embed.set_footer(text="GamePodra Store")
+
             await interaction.followup.send(embed=embed, ephemeral=True)
             return
 
