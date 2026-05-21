@@ -101,8 +101,8 @@ def _fetch_recent_completed(since_seconds: int = 120) -> list[dict]:
             discord_tag, minecraft_name, rank, rank_key,
             billing, amount, currency, verified_at, order_id
         FROM payments
-        WHERE status     = 'completed'
-          AND verified_at >= NOW() - INTERVAL :secs SECOND
+        WHERE status = 'completed'
+          AND verified_at >= NOW() - (:secs * INTERVAL '1 second')
         ORDER BY verified_at DESC
     """)
     with get_engine().connect() as conn:

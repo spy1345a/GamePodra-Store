@@ -189,18 +189,21 @@ class CommandsCog(commands.Cog, name="Commands"):
 
     @app_commands.command(name="id", description="Get your Discord user ID in DMs")
     async def id_command(self, interaction: discord.Interaction):
+
+        await interaction.response.defer(ephemeral=True)
+
         try:
             await interaction.user.send(
                 f"🆔 Your Discord User ID is:\n```{interaction.user.id}```"
             )
 
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "✅ I sent your Discord ID in DMs.",
                 ephemeral=True,
             )
 
         except discord.Forbidden:
-            await interaction.response.send_message(
+            await interaction.followup.send(
                 "❌ I couldn't DM you. Please enable DMs from server members.",
                 ephemeral=True,
             )
