@@ -88,7 +88,7 @@ class CommandsCog(commands.Cog, name="Commands"):
                 description=(
                     "You don't have an active rank on GamePodra Grab one Today.\n\n"
                     "🛒 Store:\n"
-                        https://store.gamepodra.online"
+                        "https://store.gamepodra.online"
                     ),
                     color=discord.Color.greyple(),
             )
