@@ -2,7 +2,7 @@
 cogs/roles.py — all role-assignment and membership-role logic.
 
 Role hierarchy (rank roles):
-    iron < gold < diamond < nether < god
+    iron < gold < diamond < netherite < god
 
 Membership roles (time-based, no purchase needed):
     NEW_MEMBER  — after NEW_MEMBER_DAYS days in guild
@@ -29,7 +29,7 @@ RANK_ROLE_ENV: dict[str, str] = {
     "iron":    "ROLE_ID_IRON",
     "gold":    "ROLE_ID_GOLD",
     "diamond": "ROLE_ID_DIAMOND",
-    "nether":  "ROLE_ID_NETHER",
+    "netherite": "ROLE_ID_NETHERITE",
     "god":     "ROLE_ID_GOD",
 }
 
@@ -210,7 +210,7 @@ RANK_EMOJI = {
     "iron":    "⚔️",
     "gold":    "🥇",
     "diamond": "💎",
-    "nether":  "🔥",
+    "netherite": "🔥",
     "god":     "👑",
 }
 
@@ -218,7 +218,7 @@ RANK_COLOR = {
     "iron":    discord.Color.light_grey(),
     "gold":    discord.Color.gold(),
     "diamond": discord.Color.blue(),
-    "nether":  discord.Color.dark_red(),
+    "netherite": discord.Color.dark_red(),
     "god":     discord.Color.purple(),
 }
 
@@ -274,13 +274,12 @@ async def _announce_purchase(
     emoji = RANK_EMOJI.get(row["rank_key"], "🎖️")
     color = RANK_COLOR.get(row["rank_key"], discord.Color.green())
     billing_str = "lifetime" if row["is_lifetime"] else "monthly"
-    amount_inr  = row["amount"] / 100
 
     embed = discord.Embed(
         title=f"🎉 New rank purchase!",
         description=(
             f"{member.mention} just grabbed the **{row['rank'].upper()}** {emoji} rank "
-            f"({billing_str}) for ₹{amount_inr:.0f}!\n\n"
+            f"({billing_str})!\n\n"
             "Support the server — check out our store!"
         ),
         color=color,

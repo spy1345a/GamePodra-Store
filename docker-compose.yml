@@ -48,7 +48,7 @@ services:
       ROLE_ID_IRON: "${ROLE_ID_IRON}"
       ROLE_ID_GOLD: "${ROLE_ID_GOLD}"
       ROLE_ID_DIAMOND: "${ROLE_ID_DIAMOND}"
-      ROLE_ID_NETHER: "${ROLE_ID_NETHER}"
+      ROLE_ID_NETHERITE: "${ROLE_ID_NETHERITE}"
       ROLE_ID_GOD: "${ROLE_ID_GOD}"
     depends_on:
       db:
